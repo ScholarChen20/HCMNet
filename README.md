@@ -2,13 +2,20 @@
 
 Official repository for: *[HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation](https://arxiv.org/abs/2402.03302)*
 
-![network]()
+![network](https://github.com/ScholarChen20/HCMNet/assets/HCMNet.png)
 
 The source code will be released to the public in the near future.
 
 If you have any questions, please contact: chen_wenqin2002@163.com
 
-## Installation
+# Main Results
+
+- BUSI
+- STU
+- DDTI
+- SZU-BCH-TUS983
+
+# Installation
 
 **Step-1:** Create a new conda environment & install requirements
 
@@ -31,7 +38,7 @@ mv vssmtiny_dp01_ckpt_epoch_292.pth data/pretrained/vmamba/vmamba_tiny_e292.pth
 ```
 
 
-## Citation
+# Citation
 
 ```
 @article{HCMNet,

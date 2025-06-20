@@ -2,7 +2,7 @@
 
 Official repository for: *[HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation](https://arxiv.org/abs/2402.03302)*
 
-![network](https://github.com/ScholarChen20/HCMNet/tree/main/assets/HCMNet.png)
+[network](https://github.com/ScholarChen20/HCMNet/tree/main/assets/HCMNet.png)
 
 The source code will be released to the public in the near future.
 
@@ -38,13 +38,7 @@ mv vssmtiny_dp01_ckpt_epoch_292.pth data/pretrained/vmamba/vmamba_tiny_e292.pth
 ```
 
 
-## Citation
+## Acknowledgements
 
-```
-@article{HCMNet,
-    title={HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation},
-    author={Wenqin Chen},
-    journal={arXiv preprint arXiv:2402.03302},
-    year={2024}
-}
-```
+We thank the authors of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](https://github.com/state-spaces/mamba), [UMamba](https://github.com/bowang-lab/U-Mamba), [VMamba](https://github.com/MzeroMiko/VMamba),[Swin-UMamba](https://github.com/JiarunLiu/Swin-UMamba) and [Swin-Unet](https://github.com/HuCaoFighting/Swin-Unet) for making their valuable code & data publicly available.
+

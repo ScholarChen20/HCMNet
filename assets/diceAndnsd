@@ -1,0 +1,48 @@
+Method/Microscopy     F1
+nnUNet               0.5057
+SegResNet            0.5411
+UNETR                0.4031
+SwinUNETR            0.3560
+UMambaBot            0.5646
+UMambaEnc            0.5635
+SwinUMamba           0.5667
+SwinUMambaD          0.5834
+SwinUMambaScratch    0.4342
+SwinUMambaDScratch   0.5248
+
+Method/Endoscopy    DSC       NSD
+nnUNet              0.6652    0.6794
+SegResNet           0.5498    0.5651
+UNETR
+SwinUNETR
+UMambaBot           0.6387    0.6408
+UMambaEnc           0.5637    0.5793
+SwinUMamba          0.6804    0.6944
+SwinUMambaD         0.6728    0.6908
+SwinUMambaScratch   0.6310    0.6446
+SwinUMambaDScratch  0.5131    0.5262
+
+Method/Thyroid      DSC       NSD          params FLOPs
+nnUNet              0.8610    0.9195
+SegResNet           0.8539    0.9163
+SwinUNet            0.8006    0.8410
+SwinUNETR           0.8431    0.9076
+UMamba              0.8684    0.9282
+VMUNet              0.8086    0.8899        34.62  7.56
+VMUNet_V2   0.7708  0.8692    0.9321        17.91  4.40
+SwinUMamba  0.7122  0.8303    0.8646
+SwinUMambaD 0.7614  0.8626    0.9247
+
+甲状腺超声            params  FLOPS    mIou   Dice   NSD
+localVM-UNetv3      20.54   4.48     0.7000 0.8369 0.8962
+EVM-UNetv1          33.98   6.68     0.7525 0.8580 0.9147
+Mamba_UNet          22.10M  4.35
+RM_UNet             14.86   3.41     0.7281 0.8420  0.7239/0.8387
+Multi_VMUnet        12.61M  2.39     0.6777 0.8060
+SwinPAUM+dcm        34.71M  9.48     0.7283 0.8412
+SwinPAUM+concat     34.71M  9.48     0.7274 0.8416
+SwinPAUM+add        34.71M  9.48     0.7415 0.8511
+SwinPAUM*           34.71M  9.48     0.6947 0.8187
+Swin-UMamba+ASSP    41.82M  7.45     0.7258 0.8379
+
+

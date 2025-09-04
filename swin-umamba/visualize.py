@@ -330,12 +330,12 @@ if __name__ == '__main__':
         'w/o TiFusion': './visualize/Ablation/TiFusion',
         'w/o MWFFD': './visualize/Ablation/MWFFD',
         'w/o Loss': './visualize/Ablation/Hybrid',
-        'HCMNet': './visualize/Ablation/Ours'
+        'BC-Mamba': './visualize/Ablation/Ours'
     }
     abla_input_images, abla_gt_images, abla_pred_images = load_images(ablation_input_dir, ablation_gt_dir,
                                                                       ablation_pred_dirs)
 
-    ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'HCMNet']
+    ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'BC-Mamba']
     #--------------------------实验结果可视化--------------------------
     # plot_segmentation_results(input_images, gt_images, pred_images, methods,dataset_name, save_path=None)
     #--------------------------消融实验结果可视化-----------------------

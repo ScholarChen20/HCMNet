@@ -17,6 +17,7 @@ from .SM_Unet import get_med_model,get_sm_model
 # from .RS3Mamba import RSMamba
 from .model.UNet import UNet
 from .vision_transformer import Swin_model
+from .module.CDFormer import CDFormer
 
 def net(model_name):
     if model_name == 'VMUNet':
@@ -29,16 +30,16 @@ def net(model_name):
         model = get_swin_umambaD()
     elif model_name == 'Former':
         # model = get_BEFUNet()
-        # model = get_hiformer()
-        model = res34_swin_MS(224,1)
+        model = get_hiformer()
+        # model = res34_swin_MS(224,1)
     elif model_name == 'UMamba':
         model = umamba_bot_model()
     elif model_name == "NewSwinUM":
         model = ULite().cuda()
     elif model_name == "UNet":
         model = UNet(3,1).cuda()
-    # elif model_name == "ULite":
-    #     model = ULite().cuda()
+    elif model_name == "CFFormer":
+        model = CDFormer().cuda()
     elif model_name == "MedFormer":
         model = get_med_model()
     elif model_name == "SM_UNet":
@@ -62,6 +63,7 @@ def net(model_name):
 # CVC_300_path = "./data/CVC-300/"
 
 def get_dataset(datasets):
+    ######## 肠息肉 ######
     if datasets == 'isic18':
         data_path = './data/isic2018/'
     elif datasets == 'isic17':
@@ -78,14 +80,18 @@ def get_dataset(datasets):
         data_path = './data/CVC-ClinicDB/'
     elif datasets == 'polpy':
         data_path = './data/Polpy/'
+    ######## 甲状腺超声 ######
     elif datasets == 'TUS':
         data_path = '/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/'
     elif datasets == 'DDTI' :
         data_path = './data/DDTI/'
-    elif datasets == 'Breast':
-        data_path = './data/Breast/'
+    # elif datasets == 'Breast':
+    #     data_path = './data/Breast/'
+    ######## 乳腺超声 #########
     elif datasets == 'BUSI':
         data_path = './data/BUSI/'
+    elif datasets == 'BUS':
+        data_path = './data/BUS/'
     elif datasets == 'STU':
         data_path = './data/STU/'
     else:

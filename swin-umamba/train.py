@@ -214,7 +214,7 @@ def Mamba_main():
                               % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg, avg_meters['val_acc'].avg,
                                  avg_meters['val_pc'].avg,avg_meters['val_se'].avg,avg_meters['val_sp'].avg))
             accelerator.wait_for_everyone()
-            model_path = os.path.join("./output",config['model'],config['model_pth']+"_Hiformer_150.pth")
+            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150.pth")
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)

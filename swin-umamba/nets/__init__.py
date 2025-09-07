@@ -29,8 +29,8 @@ def net(model_name):
     elif model_name == 'SwinUMambaD':
         model = get_swin_umambaD()
     elif model_name == 'Former':
-        # model = get_BEFUNet()
-        model = get_hiformer()
+        model = get_BEFUNet()
+        # model = get_hiformer()
         # model = res34_swin_MS(224,1)
     elif model_name == 'UMamba':
         model = umamba_bot_model()

@@ -1,3 +1,0 @@
-data/pretrained/vmamba/vmamba_tiny_e292.pth filter=lfs diff=lfs merge=lfs -text
-data/pretrained/vmamba/vssmbase_dp06_ckpt_epoch_241.pth filter=lfs diff=lfs merge=lfs -text
-data/pretrained/vmamba/vssmsmall_dp03_ckpt_epoch_238.pth filter=lfs diff=lfs merge=lfs -text

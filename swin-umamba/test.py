@@ -115,13 +115,13 @@ def Mamba_main():
     config = vars(parse_args())
     model = net(config['model'])
     #需要改
-    model_path = os.path.join("./output",config['model'],config['model_pth']+"_Hiformer_150.pth")
+    model_path = os.path.join("./output",config['model'],config['model_pth']+"_BEFUNet_150_1.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
     #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val")  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=12, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))

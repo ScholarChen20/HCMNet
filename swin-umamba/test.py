@@ -115,7 +115,7 @@ def Mamba_main():
     config = vars(parse_args())
     model = net(config['model'])
     #需要改
-    model_path = os.path.join("./output",config['model'],config['model_pth']+"_BEFUNet_150_1.pth")
+    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
     #需要改

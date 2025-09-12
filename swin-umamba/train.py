@@ -306,7 +306,7 @@ def main():
         accelerator.print('val_iou %.4f - val_dice %.4f' % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg))
 
         accelerator.wait_for_everyone()
-        model_path = os.path.join("./output", config['model'], config['model_pth'] + "_150.pth")
+        model_path = os.path.join("./output", config['model'], config['model_pth'] + "_150_2.pth")
         if avg_meters['val_iou'].avg > best_iou:
             best_iou = avg_meters['val_iou'].avg
             unwrapped_model = accelerator.unwrap_model(model)

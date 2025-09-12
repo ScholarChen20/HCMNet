@@ -115,7 +115,7 @@ def Mamba_main():
     config = vars(parse_args())
     model = net(config['model'])
     #需要改
-    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150.pth")
+    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_2.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
     #需要改
@@ -138,7 +138,7 @@ def Mamba_main():
     #需要改
     mask_pred = os.path.join("./output",config['model'],config['dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, config['model']+'_pred_1_'+str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['model']+'_pred_2_'+str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

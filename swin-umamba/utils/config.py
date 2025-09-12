@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--batch_size', default=8, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default=256, help='input patch size of network input')
-    parser.add_argument('--model', default="UMamba", help='training model')
+    parser.add_argument('--model', default="SwinUMamba", help='training model')
     parser.add_argument('--deepSupervisor', default=False,type=bool,help='deepSupervisor model')
     parser.add_argument('--optimizer', type=str,
                         default='AdamW', help='choosing optimizer AdamW or SGD')

@@ -121,7 +121,7 @@ def Mamba_main():
     #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val")  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=12, shuffle=False)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
@@ -138,7 +138,7 @@ def Mamba_main():
     #需要改
     mask_pred = os.path.join("./output",config['model'],config['dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, config['model']+'_pred_'+str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['model']+'_pred_1_'+str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

@@ -33,8 +33,6 @@ def deep_main():
     accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')
     if accelerator.is_main_process:
         accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba3'}})
-    # train_root_path = os.path.join(config["root_dir"], 'train')
-    # val_root_path = os.path.join(config["root_dir"], 'val')
 
     if config["dataset"] != "Polpy":
         train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train")  # 785
@@ -53,7 +51,7 @@ def deep_main():
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"),batch_size=config['batch_size'], shuffle=True, train=True)   #Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"val"),batch_size=config['batch_size'],shuffle=False, train=False)
 
-    criterion = BCEDiceLoss()   #BCEDiceLoss()
+    criterion = HybridLossWithDynamicBoundary()   #BCEDiceLoss()
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     # scheduler = get_scheduler(optimizer=optimizer)
     # model, optimizer, scheduler,train_loader, val_loader = accelerator.prepare(model, optimizer,scheduler, train_loader, val_loader)
@@ -70,7 +68,7 @@ def deep_main():
                       'val_sp': AverageMeter()}
         try:
             model.train()
-            # alpha_max_2 = 0.75
+            # alpha_max_2 = 0.75s
             # alpha_max_3 = 0.50
             for iter, data in enumerate(train_loader):
                 step+=iter
@@ -80,17 +78,17 @@ def deep_main():
                 out1,out2,out3,out4 = model(image)
                 mask = torch.unsqueeze(mask,dim=1)
                 '''Hybridloss'''
-                # loss1 = criterion(out1, mask,current_step)
-                # loss2 = criterion(out2, mask,current_step)
-                # loss3 = criterion(out3, mask,current_step)
+                loss1 = criterion(out1, mask, current_step)
+                loss2 = criterion(out2, mask, current_step)
+                loss3 = criterion(out3, mask, current_step)
                 '''BCEloss'''
                 # alpha_2 = cosine_annealing(step, alpha_max_2, config["epochs"])
                 # alpha_3 = cosine_annealing(step, alpha_max_3, config["epochs"])
-                loss1 = criterion(out1, mask)
-                loss2 = criterion(out2, mask) #* alpha_2
-                loss3 = criterion(out3, mask) #* alpha_3
+                # loss1 = criterion(out1, mask)
+                # loss2 = criterion(out2, mask) #* alpha_2
+                # loss3 = criterion(out3, mask) #* alpha_3
 
-                loss = loss1 + 0.25*loss2 + 0.125*loss3  #0.25 0.125
+                loss = loss1 + 0.25 * loss2 + 0.125 * loss3  #0.25 0.125
                 avg_meters['train_loss'].update(loss.item(), image.size(0))
                 optimizer.zero_grad()
                 accelerator.backward(loss)
@@ -122,7 +120,7 @@ def deep_main():
                                  avg_meters['val_pc'].avg, avg_meters['val_se'].avg, avg_meters['val_sp'].avg))
 
             accelerator.wait_for_everyone()
-            model_path = os.path.join("./output",config['model'],"Ablation_DDTI",config['model_pth']+"_150_2.pth")
+            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_3.pth")
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)

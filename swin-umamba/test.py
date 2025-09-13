@@ -115,7 +115,7 @@ def Mamba_main():
     config = vars(parse_args())
     model = net(config['model'])
     #需要改
-    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_1.pth")
+    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
     #需要改
@@ -209,20 +209,17 @@ def deep_main():
     # flops,params = get_model_complexity_info(model, (3, 224, 224), as_strings=True, print_per_layer_stat=True)
     # print(f"模型 Params and FLOPs:{params}, {flops}")
     #需要改
-    model_path = os.path.join("./output",config['model'],config['model_pth']+".pth")
+    model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_3.pth")
     model.load_state_dict(torch.load(model_path),False)
     model.eval()
     #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val")  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8, shuffle=False,)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False,)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
-    # val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-    #                                           batch_size=24,
-    #                                           shuffle=False,
-    #                                           collate_fn=PolypDataset.collate_fn)
+    # val_loader = torch.utils.data.DataLoader(dataset=val_dataset, batch_size=24, shuffle=False, collate_fn=PolypDataset.collate_fn)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []  # 保存 top-k 的最大堆
@@ -231,7 +228,7 @@ def deep_main():
     mask_pred = os.path.join("./output",config['model'],config['dataset'])
 
     # 文件路径
-    file_dir = os.path.join(mask_pred, config['model']+'_pred_'+str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['model']+'_pred_3_'+str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

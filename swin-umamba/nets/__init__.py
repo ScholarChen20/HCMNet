@@ -55,13 +55,6 @@ def net(model_name):
         return RuntimeError
     return model
 
-# Thyroid_path = "/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/"
-# KvasirSeg_path = "./data/Kvasir-Seg/"
-# KvasirIns_path = "./data/Kvasir-Instrument/"
-# CVC_Clinic_path = "./data/CVC-ClinicDB/"
-# CVC_Colon_path = "./data/CVC-ColonDB/"
-# CVC_300_path = "./data/CVC-300/"
-
 def get_dataset(datasets):
     ######## 肠息肉 ######
     if datasets == 'isic18':
@@ -85,8 +78,6 @@ def get_dataset(datasets):
         data_path = '/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/'
     elif datasets == 'DDTI' :
         data_path = './data/DDTI/'
-    # elif datasets == 'Breast':
-    #     data_path = './data/Breast/'
     ######## 乳腺超声 #########
     elif datasets == 'BUSI':
         data_path = './data/BUSI/'

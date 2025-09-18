@@ -9,7 +9,7 @@ def parse_args():
                         help='dataset name')
     parser.add_argument('--root_dir', default="./data/BUS/", type=str,
                         help='dataset root path')
-    parser.add_argument('--model_pth', default="BUSI", type=str,
+    parser.add_argument('--model_pth', default="BUSI_pretrained_SMFormer_cs", type=str,
                         help='model root path')
     parser.add_argument('--lr', default=0.001, type=float, metavar='N',
                         help='learning rate')   # 默认学习率为0.001
@@ -18,8 +18,8 @@ def parse_args():
     parser.add_argument('--batch_size', default=16, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default=256, help='input patch size of network input')
-    parser.add_argument('--model', default="AAUNet", help='training model')
-    parser.add_argument('--deepSupervisor', default=False, type=bool,help='deepSupervisor model')
+    parser.add_argument('--model', default="SM_UNet", help='training model')
+    parser.add_argument('--deepSupervisor', default= True, type=bool,help='deepSupervisor model')
     parser.add_argument('--optimizer', type=str,
                         default='AdamW', help='choosing optimizer AdamW or SGD')
     parser.add_argument('--augmentation',

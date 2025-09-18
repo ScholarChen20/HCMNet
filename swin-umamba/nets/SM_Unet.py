@@ -598,10 +598,10 @@ class SMFormer(nn.Module):
         self.Fuse = nn.ModuleList()
         for i in range(len(depth_dim)):
             self.Fuse.append(TIF(depth_dim[i],depth_dim[i]))
-        # self.decoder = MCFFFD(768,[96,192,384],deep_supervised=deep_supervised)
+        self.decoder = MCFFFD(768,[96,192,384],deep_supervised=deep_supervised)
         self.deep_supervised = deep_supervised
         """Decoder"""
-        self.decoder1 = UNetResDecoder(out_channels,deep_supervised,[96,192,384,768])
+        # self.decoder1 = UNetResDecoder(out_channels,deep_supervised,[96,192,384,768])
         # self.apply(self._init_weights)
 
     # def _init_weights(self, m):
@@ -625,11 +625,11 @@ class SMFormer(nn.Module):
         vss_out = self.vssm_encoder(x) #96 64 64 ,192 32 32 , 384 16 16, 768 8 8
         res_out = []
         for i in range(len(self.Fuse)):
-            if i==0: res_out.append(vss_out[i])  # UNetResDecoder解码器时需要该特征
-            fuse = self.Fuse[i](vss_out[i+1],cnn_out[i]) #融合模块  self.Fuse[i](vss_out[i+1],cnn_out[i])
+            # if i==0: res_out.append(vss_out[i])  # UNetResDecoder解码器时需要该特征
+            fuse = self.Fuse[i](vss_out[i+1], cnn_out[i]) #融合模块  self.Fuse[i](vss_out[i+1],cnn_out[i])
             res_out.append(fuse)
         """Decoder"""
-        seg_out =  self.decoder1(res_out)
+        seg_out =  self.decoder(res_out)
         if self.deep_supervised:
             for i,o in enumerate(seg_out):
                 seg_out[i] = F.interpolate(o,(256,256),mode='bilinear',align_corners=True)

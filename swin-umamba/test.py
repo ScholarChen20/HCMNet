@@ -209,7 +209,7 @@ def deep_main():
     # flops,params = get_model_complexity_info(model, (3, 224, 224), as_strings=True, print_per_layer_stat=True)
     # print(f"模型 Params and FLOPs:{params}, {flops}")
     #需要改
-    model_path = os.path.join("./output",config['model'],"Ablation_DDTI", config['model_pth'] + ".pth")
+    model_path = os.path.join("./output",config['model'],"Ablation", config['model_pth'] + ".pth")
     model.load_state_dict(torch.load(model_path),False)
     model.eval()
     #需要改

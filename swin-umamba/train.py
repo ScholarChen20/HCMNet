@@ -32,7 +32,7 @@ def deep_main():
     # initialize accelerator
     accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')
     if accelerator.is_main_process:
-        accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba3'}})
+        accelerator.init_trackers('val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
 
     if config["dataset"] != "Polpy":
         train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train")  # 785
@@ -120,7 +120,7 @@ def deep_main():
                                  avg_meters['val_pc'].avg, avg_meters['val_se'].avg, avg_meters['val_sp'].avg))
 
             accelerator.wait_for_everyone()
-            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_3.pth")
+            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_1.pth")
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)

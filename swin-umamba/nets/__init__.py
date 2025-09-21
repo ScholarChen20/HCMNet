@@ -2,7 +2,6 @@ from .vmunet import load_vm_model
 
 # from .vmunet_v2 import load_vm2_model,load_vm3_model,VMC_UNet,CFFMNet
 from .Swin_umamba import getmodel
-# from .NewSwinUM import get_swin_umambaD
 from .SwinUMambaD import get_swin_umambaD
 
 from .UMambaBot_2d import umamba_bot_model
@@ -13,7 +12,7 @@ from .module.H2Former import res34_swin_MS
 # from .model.Attention_UNet import  AttU_Net
 from .BEFUnet.BEFUnet import get_BEFUNet
 from .model.U_Lite import ULite
-from .SM_Unet import get_med_model,get_sm_model
+from .SM_Unet import get_sm_model
 # from .RS3Mamba import RSMamba
 from .model.UNet import UNet
 from .vision_transformer import Swin_model
@@ -40,8 +39,8 @@ def net(model_name):
         model = UNet(3,1).cuda()
     elif model_name == "CFFormer":
         model = CDFormer().cuda()
-    elif model_name == "MedFormer":
-        model = get_med_model()
+    # elif model_name == "MedFormer":
+    #     model = get_med_model()
     elif model_name == "SM_UNet":
         model = get_sm_model()
     elif model_name == "AAUNet":

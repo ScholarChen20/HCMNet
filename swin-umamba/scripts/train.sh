@@ -1,6 +1,3 @@
-
-
-#MAMBA_MODEL=$1
 DATA_PATH="/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/test/masks"
 EVAL_METRIC_PATH="/home/cwq/MedicalDP/SwinUmamba/swin-umamba/output/NewSwinUM"
 GPU_ID="2,3"

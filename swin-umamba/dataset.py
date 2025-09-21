@@ -110,7 +110,7 @@ class MedicineDataset(Dataset):
                 std=[0.25],  # 更适应超声低对比度特性
                 max_pixel_value=255.0
             ),
-            ToTensorV2()])  #,is_check_shapes=False
+            ToTensorV2()],is_check_shapes= False)  #,is_check_shapes=False
         self.train_transform =  A.Compose([
             A.RandomResizedCrop((256,256), scale=(0.8, 1.0), p=1.0),
             A.Resize(256, 256),

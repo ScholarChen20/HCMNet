@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/swin-umamba/nets" />
     </content>
     <orderEntry type="jdk" jdkName="Remote Python 3.10.18 (sftp://cwq@172.31.226.150:22/home/cwq/anaconda3/envs/vim/bin/python3.10)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

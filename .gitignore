@@ -2,4 +2,7 @@
 assets/diceAndnsd
 swin-umamba/Ablation
 swin-umamba/UltraSound
-nets/*
+swin-umamba/nets/*
+swin-umamba/.idea/*
+swin-umamba/utils/losses.py
+swin-umamba/visualize.py

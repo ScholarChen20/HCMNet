@@ -1,33 +1,27 @@
-# Mamba-based Heterogeneous Cross-Modality Transformer Network for Multi-source Remote Sensing Image Classification
+# BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation
 
 The source code will be released to the public in the near future.
 
-If you have any questions, please contact: zhangmaqun@stu.ouc.edu.cn
+If you have any questions, please contact: chen_wen_qin2002@163.com
 
-# Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining
 
-Official repository for: *[Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining](https://arxiv.org/abs/2402.03302)*
-
-![network](https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/swin-umamba.png)
+![architecture.png](assets/architecture.png)
 
 ## Main Results
 
 - AbdomenMRI
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/abdomenmr.png" width="50%" />
 
 - Endoscopy
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/endoscopy.png" width="50%" />
 
 - Microscopy
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/microscopy.png" width="50%" />
 
 ## Installation
 
 **Step-1:** Create a new conda environment & install requirements
 
 ```shell
-conda create -n swin_umamba python=3.10
-conda activate swin_umamba
+conda create -n vim python=3.10
+conda activate vim
 
 pip install torch==2.0.1 torchvision==0.15.2
 pip install causal-conv1d==1.1.1
@@ -35,7 +29,7 @@ pip install mamba-ssm
 pip install torchinfo timm numba
 ```
 
-**Step-2:** Install Swin-UMamba
+**Step-2:** Install vim
 
 ```shell
 git clone https://github.com/JiarunLiu/Swin-UMamba
@@ -75,12 +69,16 @@ bash scripts/train_Endoscopy.sh MODEL_NAME
 bash scripts/train_Microscopy.sh MODEL_NAME
 ```
 
-Here  `MODEL_NAME` can be:
+[//]: # (Here  `MODEL_NAME` can be:)
 
-- `nnUNetTrainerSwinUMamba`: Swin-UMamba model with ImageNet pretraining
-- `nnUNetTrainerSwinUMambaD`: Swin-UMamba$\dagger$  model with ImageNet pretraining
-- `nnUNetTrainerSwinUMambaScratch`: Swin-UMamba model without ImageNet pretraining
-- `nnUNetTrainerSwinUMambaDScratch`: Swin-UMamba$\dagger$  model without ImageNet pretraining
+[//]: # ()
+[//]: # (- `nnUNetTrainerSwinUMamba`: Swin-UMamba model with ImageNet pretraining)
+
+[//]: # (- `nnUNetTrainerSwinUMambaD`: Swin-UMamba$\dagger$  model with ImageNet pretraining)
+
+[//]: # (- `nnUNetTrainerSwinUMambaScratch`: Swin-UMamba model without ImageNet pretraining)
+
+[//]: # (- `nnUNetTrainerSwinUMambaDScratch`: Swin-UMamba$\dagger$  model without ImageNet pretraining)
 
 You can download our model checkpoints [here](https://drive.google.com/drive/folders/1zOt0ZfQPjoPdY37NfLKevYs4x5eClThN?usp=sharing).
 
@@ -90,11 +88,18 @@ We thank the authors of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](h
 
 ## Citation
 
-```
-@article{Swin-UMamba,
-    title={Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining},
-    author={Jiarun Liu and Hao Yang and Hong-Yu Zhou and Yan Xi and Lequan Yu and Yizhou Yu and Yong Liang and Guangming Shi and Shaoting Zhang and Hairong Zheng and Shanshan Wang},
-    journal={arXiv preprint arXiv:2402.03302},
-    year={2024}
-}
-```
+[//]: # (```)
+
+[//]: # (@article{Swin-UMamba,)
+
+[//]: # (    title={Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining},)
+
+[//]: # (    author={Jiarun Liu and Hao Yang and Hong-Yu Zhou and Yan Xi and Lequan Yu and Yizhou Yu and Yong Liang and Guangming Shi and Shaoting Zhang and Hairong Zheng and Shanshan Wang},)
+
+[//]: # (    journal={arXiv preprint arXiv:2402.03302},)
+
+[//]: # (    year={2024})
+
+[//]: # (})
+
+[//]: # (```)

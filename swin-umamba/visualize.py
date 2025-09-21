@@ -284,7 +284,7 @@ def save_imgs_from_path(img_path, msk_path, msk_pred_path, i, save_path, dataset
     plt.show()
 
 # Example usage
-# save_imgs_from_path('path/to/img.png', 'path/to/msk.png', 'path/to/msk_pred.png', 0, 'output_directory', 'retinal')
+# save_imgs_from_path('path/to/result.png', 'path/to/msk.png', 'path/to/msk_pred.png', 0, 'output_directory', 'retinal')
 
 
 # 对比实验图像路径

@@ -2,7 +2,8 @@
 assets/diceAndnsd
 swin-umamba/Ablation
 swin-umamba/UltraSound
-swin-umamba/nets/*
+swin-umamba/nets/SM_Unet.py
+swin-umamba/nets/SwinUMambaD.py
 
 swin-umamba/.idea/*
 
@@ -11,4 +12,3 @@ swin-umamba/visualize.py
 swin-umamba/train.py
 swin-umamba/test.py
 swin-umamba/dataset.py
-__pycache__

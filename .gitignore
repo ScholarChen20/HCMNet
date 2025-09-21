@@ -6,3 +6,6 @@ swin-umamba/nets/*
 swin-umamba/.idea/*
 swin-umamba/utils/losses.py
 swin-umamba/visualize.py
+swin-umamba/train.py
+swin-umamba/test.py
+swin-umamba/dataset.py

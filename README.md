@@ -2,7 +2,7 @@
 
 Official repository for: *[HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation](https://arxiv.org/abs/2402.03302)*
 
-[network](https://github.com/ScholarChen20/HCMNet/tree/main/assets/HCMNet.png)
+![HCMNet.png](assets/HCMNet.png)
 
 The source code will be released to the public in the near future.
 

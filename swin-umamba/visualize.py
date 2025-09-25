@@ -19,7 +19,7 @@ def load_images(input_dir, gt_dir, pred_dirs):
 def ablation_segmentation_results(input_images, gt_images, pred_images, methods):
     num_samples = len(input_images)
     num_methods = len(methods)
-    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(10, num_samples * 1.7))
+    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(10, num_samples * 1.5))
     plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.05, right=0.95)
 
     for i in range(num_samples):
@@ -115,16 +115,11 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
     num_methods = len(methods)
     assert num_methods == 10, "需要10种分割方法"
 
-    fig, axes = plt.subplots(num_samples, 11, figsize=(15, num_samples * 1.7))  #``figsize``控制图的大小,行距离、列距离
+    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(15, num_samples * 1.7))  #``figsize``控制图的大小,行距离、列距离
     plt.subplots_adjust(wspace=0.05, hspace=0.05,left=0.05, right=0.95,top=0.95, bottom=0.05) #left=0.05,减少左边距,上边距
 
     for i in range(num_samples):
-        print(f"\n=== 样本 {i + 1} ===")
-        print(f"输入图像: {os.path.basename(input_images[i])}")
-        print(f"GT图像: {os.path.basename(gt_images[i])}")
-
         # ==================== 第一列：超声原图+真实边界 ====================
-        # 读取并调整原图尺寸
         input_img = cv2.cvtColor(cv2.imread(input_images[i]), cv2.COLOR_BGR2RGB)
         input_img = cv2.resize(input_img, (256, 256))
 
@@ -134,8 +129,9 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
         contours, _ = cv2.findContours(gt_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         # 在原图上绘制红色边界
-        overlay = input_img.copy()
-        cv2.drawContours(overlay, contours, -1, (255, 0, 0), 2)
+        # overlay = input_img.copy()
+        overlay = np.zeros_like(input_img)
+        cv2.drawContours(overlay, contours, -1, (255, 0, 0), 2)  # 红色轮廓
         alpha = 0.6  # 透明度
         blended = cv2.addWeighted(overlay, alpha, input_img, 1 - alpha, 0)
 
@@ -154,37 +150,56 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
             pred_mask = cv2.imread(pred_images[method][i], cv2.IMREAD_GRAYSCALE)
             pred_mask = cv2.resize(pred_mask, (256, 256))
 
+            # 检查图像是否加载成功
+            if pred_mask is None:
+                # 创建空图像占位符
+                canvas = np.zeros((256, 256, 3), dtype=np.uint8)
+                axes[i, col_idx].imshow(canvas)
+                axes[i, col_idx].set_title("Load Error", fontsize=10, color='red')
+                axes[i, col_idx].axis('off')
+                continue
+
+            pred_mask = cv2.resize(pred_mask, (256, 256))
             # 创建RGB画布
             canvas = np.zeros((256, 256, 3), dtype=np.uint8)
 
-            # # 绘制真实掩码（红色半透明）
-            # canvas[gt_mask > 0] = [255, 0, 0]  # BGR->RGB转换
-            # # 绘制预测掩码（绿色半透明）
-            # canvas[pred_mask > 0] = [0, 255, 0]
+            # 确保GT掩码已定义
+            gt_mask = cv2.resize(cv2.imread(gt_images[i], cv2.IMREAD_GRAYSCALE), (256, 256))
+
+            # 计算不同分割区域
+            over_segmented = np.logical_and(pred_mask > 0, gt_mask == 0)
+            under_segmented = np.logical_and(pred_mask == 0, gt_mask > 0)
+            correctly_segmented = np.logical_and(pred_mask > 0, gt_mask > 0)
+            # 着色 - 使用更鲜艳的颜色
+            canvas[over_segmented] = [255, 0, 0]  # 红色：过分割
+            canvas[under_segmented] = [0, 255, 0]  # 绿色：欠分割
+            canvas[correctly_segmented] = [255, 255, 255]  # 白色：正确分割
+            axes[i, col_idx].imshow(canvas)
+
 
             # (修改后的)过度细分（预测为1，真实为0） -> 红色
-            over_segmented = np.logical_and(pred_mask > 0, gt_mask == 0)
-            canvas[over_segmented] = [255, 0, 0]
-
-            # 细分不足（预测为0，真实为1） -> 绿色
-            under_segmented = np.logical_and(pred_mask == 0, gt_mask > 0)
-            canvas[under_segmented] = [0, 255, 0]
-
-            # 正确细分（预测为1，真实为1） -> 白色
-            correctly_segmented = np.logical_and(pred_mask > 0, gt_mask > 0)
-            canvas[correctly_segmented] = [255, 255, 255]
-            # 设置透明度
-            alpha_mask = np.zeros_like(pred_mask)
-            alpha_mask[over_segmented | under_segmented | correctly_segmented] = 50
-
-            # 设置透明度
-            alpha_mask = np.zeros_like(canvas)
-            alpha_mask[gt_mask > 0] = 50  # 真实掩码透明度
-            alpha_mask[pred_mask > 0] = 50  # 预测掩码透明度
-            alpha_mask = cv2.cvtColor(alpha_mask, cv2.COLOR_BGR2GRAY)
-
+            # over_segmented = np.logical_and(pred_mask > 0, gt_mask == 0)
+            # canvas[over_segmented] = [255, 0, 0]
+            #
+            # # 细分不足（预测为0，真实为1） -> 绿色
+            # under_segmented = np.logical_and(pred_mask == 0, gt_mask > 0)
+            # canvas[under_segmented] = [0, 255, 0]
+            #
+            # # 正确细分（预测为1，真实为1） -> 白色
+            # correctly_segmented = np.logical_and(pred_mask > 0, gt_mask > 0)
+            # canvas[correctly_segmented] = [255, 255, 255]
+            # # 设置透明度
+            # alpha_mask = np.zeros_like(pred_mask)
+            # alpha_mask[over_segmented | under_segmented | correctly_segmented] = 50
+            #
+            # # 设置透明度
+            # alpha_mask = np.zeros_like(canvas)
+            # alpha_mask[gt_mask > 0] = 50  # 真实掩码透明度
+            # alpha_mask[pred_mask > 0] = 50  # 预测掩码透明度
+            # alpha_mask = cv2.cvtColor(alpha_mask, cv2.COLOR_BGR2GRAY)
             # 显示叠加结果
-            axes[i, col_idx].imshow(canvas, alpha=alpha_mask / 255.0)
+            # axes[i, col_idx].imshow(canvas, alpha =alpha_mask / 255.0)
+
             if i == 0:
                 axes[i, col_idx].set_title(method, fontsize=12)
             axes[i, col_idx].axis('off')

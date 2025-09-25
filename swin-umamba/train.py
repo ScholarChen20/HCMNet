@@ -35,27 +35,19 @@ def deep_main():
         accelerator.init_trackers('val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
 
     if config["dataset"] != "Polpy":
-        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train")  # 785
-        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "val"), mode="val")  # 99
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset, batch_size=config['batch_size'], shuffle=True)
-        val_loader = torch.utils.data.DataLoader(
-            val_dataset, batch_size=config['batch_size'], shuffle=False)
-        # train_dataset = ThyroidDataset(os.path.join(get_dataset(config["dataset"]),"train"), get_transform(train=True))
-        # val_dataset = ThyroidDataset(os.path.join(get_dataset(config["dataset"]),"val"), get_transform(train=False))
-        # train_loader = torch.utils.data.DataLoader(
-        #     train_dataset, batch_size=config['batch_size'], shuffle=True, collate_fn=train_dataset.collate_fn)
-        # val_loader = torch.utils.data.DataLoader(
-        #     val_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=val_dataset.collate_fn)
+        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train")
+        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "val"), mode="val")
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
     else:
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"),batch_size=config['batch_size'], shuffle=True, train=True)   #Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"val"),batch_size=config['batch_size'],shuffle=False, train=False)
 
     criterion = HybridLossWithDynamicBoundary()   #BCEDiceLoss()
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
-    # scheduler = get_scheduler(optimizer=optimizer)
-    # model, optimizer, scheduler,train_loader, val_loader = accelerator.prepare(model, optimizer,scheduler, train_loader, val_loader)
-    model, optimizer,train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
+    scheduler = get_scheduler(optimizer=optimizer)
+    model, optimizer, scheduler, train_loader, val_loader = accelerator.prepare(model, optimizer,scheduler, train_loader, val_loader)
+    # model, optimizer,train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
 
     best_iou = 0.
     step = 0
@@ -71,7 +63,7 @@ def deep_main():
             # alpha_max_2 = 0.75s
             # alpha_max_3 = 0.50
             for iter, data in enumerate(train_loader):
-                step+=iter
+                step += iter
                 current_step  = epoch * len(train_loader) + iter
                 image ,mask = data
                 # 检查数据范围 # print("输入数据范围:", torch.min(image), torch.max(image)) tensor(-2.1179, device='cuda:2') tensor(2.6400, device='cuda:2')
@@ -93,7 +85,7 @@ def deep_main():
                 optimizer.zero_grad()
                 accelerator.backward(loss)
                 optimizer.step()
-                # scheduler.step()
+                scheduler.step()
             accelerator.log({'train_loss': avg_meters['train_loss'].avg})
             print('Training Loss : {:.4f}'.format(avg_meters['train_loss'].avg))
             model.eval()
@@ -140,7 +132,7 @@ def Mamba_main():
     # initialize accelerator
     accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')
     if accelerator.is_main_process:
-        accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba3'}})
+        accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
 
     if config["dataset"] != "Poply":
         train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"train"), mode="train") #785
@@ -212,7 +204,7 @@ def Mamba_main():
                               % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg, avg_meters['val_acc'].avg,
                                  avg_meters['val_pc'].avg,avg_meters['val_se'].avg,avg_meters['val_sp'].avg))
             accelerator.wait_for_everyone()
-            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150.pth")
+            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_1.pth")
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)

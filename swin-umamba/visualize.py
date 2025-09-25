@@ -105,7 +105,7 @@ def ablation_segmentation_results(input_images, gt_images, pred_images, methods)
 
 
 
-def plot_segmentation_results(input_images, gt_images, pred_images, methods,dataset_name, save_path=None):
+def plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None):
     """
     七列可视化布局：
     列1：超声原图+真实边界(红色)
@@ -119,6 +119,9 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods,data
     plt.subplots_adjust(wspace=0.05, hspace=0.05,left=0.05, right=0.95,top=0.95, bottom=0.05) #left=0.05,减少左边距,上边距
 
     for i in range(num_samples):
+        print(f"\n=== 样本 {i + 1} ===")
+        print(f"输入图像: {os.path.basename(input_images[i])}")
+        print(f"GT图像: {os.path.basename(gt_images[i])}")
 
         # ==================== 第一列：超声原图+真实边界 ====================
         # 读取并调整原图尺寸
@@ -214,7 +217,6 @@ def origin_segmentation_results(input_images, gt_images, pred_images, methods, s
             axes[i, 0].set_title("Input",fontsize=10)
         axes[i, 0].axis('off')
 
-
         # Ground Truth
         gt_img = cv2.imread(gt_images[i], cv2.IMREAD_GRAYSCALE)
         gt_img = cv2.resize(gt_img, (256,256))
@@ -283,26 +285,10 @@ def save_imgs_from_path(img_path, msk_path, msk_pred_path, i, save_path, dataset
     plt.tight_layout()
     plt.show()
 
-# Example usage
-# save_imgs_from_path('path/to/result.png', 'path/to/msk.png', 'path/to/msk_pred.png', 0, 'output_directory', 'retinal')
-
-
-# 对比实验图像路径
-input_dir = './visualize/images'
-gt_dir = './visualize/masks'
-pred_dirs = {
-    'UNet': './visualize/UNet',
-    'UNet++': './visualize/UNet++',
-    'AAU-net': './visualize/AAU-net',
-    'Swin-UNet': './visualize/SwinUNet',
-    'HiFormer-L': './visualize/HiFormer-L',
-    'H2Former': './visualize/H2Former',
-    'BEFUNet': './visualize/BEFUNet',
-    'U-Mamba': './visualize/UMamba',
-    'Swin-UMamba': './visualize/SwinUMamba',
-    'Ours': './visualize/Ours'
-}
 def show():
+    """
+    单张图片掩码和模型预测图像展示
+    """
     input_images = '/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/test/images/L4-0013-5.jpg'
     gt_images = '/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/test/masks/L4-0013-5.png'
     msk_pred='./output/VMUNetv2/ph1/L4-0013-5.png'
@@ -311,32 +297,65 @@ def show():
     # msk_pred=cv2.imread(msk_pred,cv2.IMREAD_GRAYSCALE)
     save_imgs_from_path(img_path=input_images, msk_path=gt_images,msk_pred_path=msk_pred,i=0, datasets="None", threshold=0.5,
               test_data_name='test', save_path=None)
-# 加载图像路径
-# input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)
-# 绘制和保存结果
-# methods = ['DeepAll', 'FedDG', 'DoFe', 'RAM-DSIR', 'TriD', 'DDG(Ours)']
-# methods = ['UNet', 'UNet++','AAU-net', 'Swin-UNet','HiFormer-L', 'H2Former', 'BEFUNet', 'U-Mamba','Swin-UMamba','Ours']
-
 
 
 if __name__ == '__main__':
     dataset_name = ['Site1','Site2','Site3','Site4']
-    # 消融实验图像路径
-    ablation_input_dir = './visualize/Ablation/images'
-    ablation_gt_dir = './visualize/Ablation/masks'
-    ablation_pred_dirs = {
-        'baseline': './visualize/Ablation/baseline',
-        'w/o CNN': './visualize/Ablation/CNN',
-        'w/o TiFusion': './visualize/Ablation/TiFusion',
-        'w/o MWFFD': './visualize/Ablation/MWFFD',
-        'w/o Loss': './visualize/Ablation/Hybrid',
-        'BC-Mamba': './visualize/Ablation/Ours'
-    }
-    abla_input_images, abla_gt_images, abla_pred_images = load_images(ablation_input_dir, ablation_gt_dir,
-                                                                      ablation_pred_dirs)
-
+    # methods = ['DeepAll', 'FedDG', 'DoFe', 'RAM-DSIR', 'TriD', 'DDG(Ours)']
+    methods = ['UNet', 'UNet++', 'AAU-net', 'Swin-UNet', 'HiFormer-L', 'H2Former', 'BEFUNet', 'U-Mamba', 'Swin-UMamba','Ours']  # 对比方法
     ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'BC-Mamba']
-    #--------------------------实验结果可视化--------------------------
-    # plot_segmentation_results(input_images, gt_images, pred_images, methods,dataset_name, save_path=None)
-    #--------------------------消融实验结果可视化-----------------------
-    ablation_segmentation_results(abla_input_images, abla_gt_images, abla_pred_images,ablation_methods)
+
+    type = "Comparison"
+
+    if type == "Comparison":
+        # 对比实验图像路径
+        input_dir = './visualize/VisualizeResult/images'
+        gt_dir = './visualize/VisualizeResult/masks'
+        pred_dirs = {
+            'UNet': './visualize/VisualizeResult/UNet',
+            'UNet++': './visualize/VisualizeResult/UNet++',
+            'AAU-net': './visualize/VisualizeResult/AAU-net',
+            'Swin-UNet': './visualize/VisualizeResult/SwinUNet',
+            'HiFormer-L': './visualize/VisualizeResult/HiFormer-L',
+            'H2Former': './visualize/VisualizeResult/H2Former',
+            'BEFUNet': './visualize/VisualizeResult/BEFUNet',
+            'U-Mamba': './visualize/VisualizeResult/UMamba',
+            'Swin-UMamba': './visualize/VisualizeResult/SwinUMamba',
+            'Ours': './visualize/VisualizeResult/Ours'
+        }
+        # --------------------------对比实验结果可视化--------------------------
+        input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)          # 加载图像路径
+        plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
+    elif type == "Transfer":
+        input_dir = './visualize/Transfer-Visualize/images'
+        gt_dir = './visualize/Transfer-Visualize/masks'
+        pred_dirs = {
+            'UNet': './visualize/Transfer-Visualize/UNet',
+            'UNet++': './visualize/Transfer-Visualize/UNet++',
+            'AAU-net': './visualize/Transfer-Visualize/AAU-net',
+            'Swin-UNet': './visualize/Transfer-Visualize/SwinUNet',
+            'HiFormer-L': './visualize/Transfer-Visualize/HiFormer-L',
+            'H2Former': './visualize/Transfer-Visualize/H2Former',
+            'BEFUNet': './visualize/Transfer-Visualize/BEFUNet',
+            'U-Mamba': './visualize/Transfer-Visualize/UMamba',
+            'Swin-UMamba': './visualize/Transfer-Visualize/SwinUMamba',
+            'Ours': './visualize/Transfer-Visualize/Ours'
+        }
+        # --------------------------域转移实验结果可视化--------------------------
+        input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)          # 加载图像路径
+        plot_segmentation_results(input_images, gt_images, pred_images, methods,dataset_name, save_path=None)
+    elif type == "Ablation":
+        # 消融实验图像路径
+        ablation_input_dir = './visualize/Ablation/images'
+        ablation_gt_dir = './visualize/Ablation/masks'
+        ablation_pred_dirs = {
+            'baseline': './visualize/Ablation/baseline',
+            'w/o CNN': './visualize/Ablation/CNN',
+            'w/o TiFusion': './visualize/Ablation/TiFusion',
+            'w/o MWFFD': './visualize/Ablation/MWFFD',
+            'w/o Loss': './visualize/Ablation/Hybrid',
+            'BC-Mamba': './visualize/Ablation/Ours'
+        }
+        #--------------------------消融实验结果可视化-----------------------
+        abla_input_images, abla_gt_images, abla_pred_images = load_images(ablation_input_dir, ablation_gt_dir, ablation_pred_dirs)
+        ablation_segmentation_results(abla_input_images, abla_gt_images, abla_pred_images, ablation_methods)

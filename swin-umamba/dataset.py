@@ -104,13 +104,13 @@ class MedicineDataset(Dataset):
             if os.path.exists(i) is False:
                 raise FileNotFoundError(f"file {i} does not exists.")
         self.val_transform = A.Compose([
-            A.Resize(256, 256),
+            A.Resize(224, 224),
             A.Normalize(
                 mean=[0.45],  # 根据数据集统计调整
                 std=[0.25],  # 更适应超声低对比度特性
                 max_pixel_value=255.0
             ),
-            ToTensorV2()],is_check_shapes= False)  #,is_check_shapes=False
+            ToTensorV2()])  #,is_check_shapes=False
         self.train_transform =  A.Compose([
             A.RandomResizedCrop((256,256), scale=(0.8, 1.0), p=1.0),
             A.Resize(256, 256),

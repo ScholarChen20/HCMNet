@@ -1,6 +1,6 @@
-# HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation
+# BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation
 
-Official repository for: *[HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation](https://arxiv.org/abs/2402.03302)*
+Official repository for: *[BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation](https://github.com/ScholarChen20/HCMNet)*
 
 ![HCMNet.png](assets/HCMNet.png)
 
@@ -47,12 +47,7 @@ We thank the authors of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](h
 ## Citation
 
 ```
-@article{HCMNet,
-    title={HCMNet: A Hybrid CNN-Mamba Architecture for Medical Ultrasound Image  Segmentation},
-    author={Wenqin Chen},
-    journal={},
-    year={2025}
-}
+
 ```
 
 

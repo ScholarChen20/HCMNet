@@ -20,8 +20,8 @@ If you have any questions, please contact: chen_wenqin2002@163.com
 **Step-1:** Create a new conda environment & install requirements
 
 ```shell
-conda create -n swin_umamba python=3.10
-conda activate swin_umamba
+conda create -n bc_mamba python=3.10
+conda activate bc_mamba
 
 pip install torch==2.0.1 torchvision==0.15.2
 pip install causal-conv1d==1.1.1
@@ -31,7 +31,8 @@ pip install torchinfo timm numba
 
 **ImageNet pretrained model:** 
 
-We use the ImageNet pretrained VMamba-Tiny model from [VMamba](https://github.com/MzeroMiko/VMamba). You need to download the model checkpoint and put it into `data/pretrained/vmamba/vmamba_tiny_e292.pth`
+We use the ImageNet pretrained VMamba-Tiny model from [VMamba](https://github.com/MzeroMiko/VMamba). You need to download the model checkpoint and put it into `pretrained_ckpt/vmamba_tiny_e292.pth`
+We use the ImageNet pretrained ConvNeXt-T model from [VMamba](https://github.com/facebookresearch/ConvNeXt). You need to download the model checkpoint and put it into `pretrained_ckpt/convnext_tiny_1k_224_ema.pth`
 
 ```
 wget https://github.com/MzeroMiko/VMamba/releases/download/%2320240218/vssmtiny_dp01_ckpt_epoch_292.pth

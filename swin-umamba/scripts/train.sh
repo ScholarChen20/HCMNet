@@ -6,7 +6,7 @@ echo "start training...." &&
 accelerate launch \
       --num_processes=3 \
       --num_machines=1 \
-      --gpu_ids='1,2,3' \
+      --gpu_ids='1,2,0' \
       --mixed_precision=fp16 \
       --dynamo_backend=no \
       --main_process_port=29536 \

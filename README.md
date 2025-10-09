@@ -32,7 +32,9 @@ pip install torchinfo timm numba
 **ImageNet pretrained model:** 
 
 We use the ImageNet pretrained VMamba-Tiny model from [VMamba](https://github.com/MzeroMiko/VMamba). You need to download the model checkpoint and put it into `pretrained_ckpt/vmamba_tiny_e292.pth`
-We use the ImageNet pretrained ConvNeXt-T model from [VMamba](https://github.com/facebookresearch/ConvNeXt). You need to download the model checkpoint and put it into `pretrained_ckpt/convnext_tiny_1k_224_ema.pth`
+
+
+We use the ImageNet pretrained ConvNeXt-T model from [ConvNeXt](https://github.com/facebookresearch/ConvNeXt). You need to download the model checkpoint and put it into `pretrained_ckpt/convnext_tiny_1k_224_ema.pth`
 
 ```
 wget https://github.com/MzeroMiko/VMamba/releases/download/%2320240218/vssmtiny_dp01_ckpt_epoch_292.pth

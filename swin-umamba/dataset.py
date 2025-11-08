@@ -104,7 +104,7 @@ class MedicineDataset(Dataset):
             if os.path.exists(i) is False:
                 raise FileNotFoundError(f"file {i} does not exists.")
         self.val_transform = A.Compose([
-            A.Resize(224, 224),
+            A.Resize(256, 256),
             A.Normalize(
                 mean=[0.45],  # 根据数据集统计调整
                 std=[0.25],  # 更适应超声低对比度特性

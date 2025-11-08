@@ -1,11 +1,14 @@
 /.vscode
 assets/diceAndnsd
-swin-umamba/Ablation
-swin-umamba/UltraSound
+swin-umamba/results/Ablation
+swin-umamba/results/UltraSound
 swin-umamba/nets/SM_Unet.py
 swin-umamba/nets/SwinUMambaD.py
 
 swin-umamba/.idea/*
+swin-umamba/data/*
+swin-umamba/pretrained_ckpt/*
+swin-umamba/nets/*
 
 swin-umamba/utils/losses.py
 swin-umamba/visualize.py

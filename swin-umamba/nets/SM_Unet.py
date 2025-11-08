@@ -638,16 +638,16 @@ class SMFormer(nn.Module):
         else:
             return seg_out
 
-    @torch.no_grad()
-    def freeze_encoder(self):
-        for name, param in self.vssm_encoder.named_parameters():
-            if "patch_embed" not in name:
-                param.requires_grad = False
-
-    @torch.no_grad()
-    def unfreeze_encoder(self):
-        for param in self.vssm_encoder.parameters():
-            param.requires_grad = True
+    # @torch.no_grad()
+    # def freeze_encoder(self):
+    #     for name, param in self.vssm_encoder.named_parameters():
+    #         if "patch_embed" not in name:
+    #             param.requires_grad = False
+    #
+    # @torch.no_grad()
+    # def unfreeze_encoder(self):
+    #     for param in self.vssm_encoder.parameters():
+    #         param.requires_grad = True
 
 
 class MedFormer(nn.Module):

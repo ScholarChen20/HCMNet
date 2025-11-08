@@ -5,7 +5,7 @@ from sympy import false
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default="SZU-BUS",type=str,
+    parser.add_argument('--dataset', default="BUS-SZU",type=str,
                         help='dataset name')
     parser.add_argument('--root_dir', default="./data/STU/", type=str,
                         help='dataset root path')
@@ -15,16 +15,19 @@ def parse_args():
                         help='learning rate')   # 默认学习率为0.001
     parser.add_argument('--epochs', default= 150, type=int, metavar='N',
                         help='number of total epochs to run')
-    parser.add_argument('--batch_size', default = 4, type=int, metavar='N',help='mini-batch size')
+    parser.add_argument('--batch_size', default = 8, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default = 256, help='input patch size of network input')
     parser.add_argument('--model', default="BCMamba", help='training model')
-    parser.add_argument('--output', default="./output", help='training model')
-    parser.add_argument('--deepSupervisor', default= False, type=bool,help='deepSupervisor model')
+    parser.add_argument('--output', default="./output", help='output dir')
+    parser.add_argument('--iteration', default="1", help='the number of training model')
+    parser.add_argument('--deepSupervisor', default= True, type=bool,help='deepSupervisor model')
     parser.add_argument('--optimizer', type=str,
                         default='AdamW', help='choosing optimizer AdamW or SGD')
     parser.add_argument('--augmentation',
                         default=False, help='choose to do random flip rotation')
+    parser.add_argument('--seed', type=int, default=1234, help='random seed')
+    parser.add_argument('--n_skip', type=int, default=3, help='using number of skip-connect, default is num')
     args = parser.parse_args()
 
     return args

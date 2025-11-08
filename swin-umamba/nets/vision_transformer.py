@@ -80,7 +80,7 @@ class SwinUnet(nn.Module):
             print("none pretrain")
 
 def Swin_model(config=None):
-    net = SwinUnet(config,img_size=224,num_classes=1).cuda()
+    net = SwinUnet(config, img_size=224, num_classes=1).cuda()
     net.load_from(config)
     return net
 

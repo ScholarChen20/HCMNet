@@ -115,7 +115,11 @@ def Mamba_main():
     config = vars(parse_args())
     model = net(config['model'])
     #需要改
-    model_path = os.path.join("./output",config['model'], config['model_pth']+"_BEFUNet_150_1.pth")
+    train_epochs = config['epochs']
+    model_path = os.path.join(
+        config['output'],
+        config['model'],
+        f"{config['model_pth']}_{train_epochs}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
     #需要改
@@ -136,7 +140,7 @@ def Mamba_main():
     top_k = 5
 
     #需要改
-    mask_pred = os.path.join("./output",config['model'],config['dataset'])
+    mask_pred = os.path.join(config['output'], config['model'],config['dataset'])
     #pred生成路径
     file_dir = os.path.join(mask_pred, config['model'] + '_pred_BEFUNet_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
@@ -208,11 +212,13 @@ def deep_main():
     model = net(config['model'])
     # flops,params = get_model_complexity_info(model, (3, 224, 224), as_strings=True, print_per_layer_stat=True)
     # print(f"模型 Params and FLOPs:{params}, {flops}")
-    #需要改
-    model_path = os.path.join("./output",config['model'], config['model_pth'] + "_150_1.pth")
+    train_epochs = config['epochs']
+    model_path = os.path.join(
+        config['output'],
+        config['model'],
+        f"{config['model_pth']}_{train_epochs}.pth")
     model.load_state_dict(torch.load(model_path),False)
     model.eval()
-    #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val")  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 4, shuffle=False,)
@@ -224,11 +230,10 @@ def deep_main():
     count = 0
     top_dice_list = []  # 保存 top-k 的最大堆
     top_k = 5  # 保存 top-k 的最大堆
-    #需要改
-    mask_pred = os.path.join("./output",config['model'],config['dataset'])
+    mask_pred = os.path.join(config['output'], config['model'], config['dataset'])
 
     # 文件路径
-    file_dir = os.path.join(mask_pred, config['model']+'_pred_'+str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['model'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

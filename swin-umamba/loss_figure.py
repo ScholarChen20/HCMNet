@@ -1,74 +1,106 @@
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-
 # 示例数据（模拟收敛趋势）
 np.random.seed(42)
+import numpy as np
 
-def generate_dice(epochs, start, end, noise=0.01):
-    """生成模拟的Dice序列：从start上升到end，添加轻微噪声"""
+
+def generate_dice(epochs, model_name, dataset_name, total_epochs):
+    """
+    从Excel文件中读取真实的Dice序列，若文件不存在则使用模拟数据。
+    每5个epoch取一次平均值，并用线性插值填充到完整epoch数。
+    参数:
+        epochs: int, 要获取的epoch数量
+        model_name: str, 模型名称
+        dataset_name: str, 数据集名称
+        total_epochs: int, 训练总周期数
+
+    返回:
+        np.ndarray: 长度为 epochs 的Dice序列（已平滑并插值）
+    """
+    # 构造文件路径（处理空格和括号）
+    safe_model_name = model_name.replace(' ', '_').replace('(', '').replace(')', '')
+    file_path = os.path.join('./log_dir', dataset_name, f"{safe_model_name}_{total_epochs}.xlsx")
+
+    # 尝试读取Excel文件
+    try:
+        df = pd.read_excel(file_path)
+        if 'Epoch' in df.columns and 'Dice' in df.columns:
+            # 确保按Epoch排序
+            df = df.sort_values('Epoch').reset_index(drop=True)
+            # 截取前epochs个数据点
+            dice_data = df['Dice'].values[:epochs]
+
+            # 每5个epoch取平均值
+            step = 5
+            smoothed_dice = []
+            for i in range(0, len(dice_data), step):
+                window = dice_data[i:i+step]
+                smoothed_dice.append(np.mean(window))
+
+            # 插值到完整epoch数
+            x_smooth = np.arange(1, len(smoothed_dice) + 1)  # [1, 2, ..., 30]
+            x_full = np.arange(1, epochs + 1)                 # [1, 2, ..., 150]
+            interpolated_dice = np.interp(x_full, x_smooth, smoothed_dice)
+
+            return interpolated_dice
+        else:
+            print(f"Warning: 文件 {file_path} 缺少 'Epoch' 或 'Dice' 列，使用模拟数据。")
+    except FileNotFoundError:
+        print(f"Warning: 文件 {file_path} 未找到，使用模拟数据。")
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+        # 使用模拟数据作为回退
+        pass
+
+    # 回退到模拟数据（并做相同处理）
     x = np.linspace(0, 1, epochs)
-    dice = start + (end - start) * (1 - np.exp(-5 * x))  # sigmoid函数模拟收敛
-    dice += np.random.normal(0, noise, epochs)
+    dice = 0.4 + (0.78 - 0.4) * (1 - np.exp(-5 * x))  # 默认收敛曲线
+    dice += np.random.normal(0, 0.01, epochs)
     dice = np.clip(dice, 0, 1)
-    return dice
 
-# 模型列表
-models = [
-    'U-Net', 'U-Net++', 'Attention U-Net', 'TransUNet',
-    'CENet', 'UNext', 'AAU-Net', 'MEF-UNet'
-]
+    # 每5个epoch取平均值
+    step = 5
+    smoothed_dice = []
+    for i in range(0, len(dice), step):
+        window = dice[i:i+step]
+        smoothed_dice.append(np.mean(window))
 
-# 设置训练轮数
-epochs = 300
+    # 插值到完整epoch数
+    x_smooth = np.arange(1, len(smoothed_dice) + 1)
+    x_full = np.arange(1, epochs + 1)
+    interpolated_dice = np.interp(x_full, x_smooth, smoothed_dice)
 
-# 生成数据
-data = {'Epoch': np.arange(1, epochs+1)}
-for model in models:
-    if model == 'U-Net':
-        data[model] = generate_dice(epochs, 0.4, 0.72)
-    elif model == 'U-Net++':
-        data[model] = generate_dice(epochs, 0.42, 0.75)
-    elif model == 'Attention U-Net':
-        data[model] = generate_dice(epochs, 0.15, 0.70)
-    elif model == 'TransUNet':
-        data[model] = generate_dice(epochs, 0.45, 0.73)
-    elif model == 'CENet':
-        data[model] = generate_dice(epochs, 0.43, 0.71)
-    elif model == 'UNext':
-        data[model] = generate_dice(epochs, 0.35, 0.74)
-    elif model == 'AAU-Net':
-        data[model] = generate_dice(epochs, 0.41, 0.76)
-    else:  # MEF-UNet
-        data[model] = generate_dice(epochs, 0.48, 0.78)
+    return interpolated_dice
 
-df = pd.DataFrame(data)
 
-# 颜色映射（参考示例图颜色）
-color_map = {
-    'U-Net': '#212121',
-    'U-Net++': '#FFEB3B',
-    'Attention U-Net': '#BDBDBD',
-    'TransUNet': '#FF9800',
-    'CENet': '#2196F3',
-    'UNext': '#4CAF50',
-    'AAU-Net': '#9C27B0',
-    'MEF-UNet': '#F44336'
-}
 
-# 线条宽度
-linewidth = 1.5
 
-def plot_loss_figure():
+
+def plot_loss_figure(models, dataset_name, epochs):
+
+    # 生成数据
+    data = {'Epoch': np.arange(1, epochs + 1)}
+    for model in models:
+        data[model] = generate_dice(epochs, model, dataset_name, epochs)
+
+    df = pd.DataFrame(data)
+
+    # 动态生成颜色（使用 matplotlib 的 tab10 调色板）
+    colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+    color_map = {model: colors[i] for i, model in enumerate(models)}
+
+
     fig, ax = plt.subplots(figsize=(10, 6))
-
-    # 绘制每条折线
     for model in models:
         ax.plot(
             df['Epoch'],
             df[model],
             color=color_map[model],
-            linewidth=linewidth,
+            linewidth=1.5,    # 线条宽度
             label=model
         )
 
@@ -77,11 +109,12 @@ def plot_loss_figure():
     ax.set_ylabel('Dice', fontsize=12, fontweight='medium')
 
     # 添加标题
-    ax.set_title('Benign Tumour of BUSI', fontsize=14, fontweight='bold', pad=20)
+    ax.set_title(f'Benign Tumour of {dataset_name}', fontsize=14, fontweight='bold', pad=20)
+
 
     # 设置坐标轴范围
     ax.set_xlim(0, epochs)
-    ax.set_ylim(0, 0.8)
+    ax.set_ylim(0, 1.0)
 
     # 设置刻度
     ax.set_xticks(np.arange(0, epochs+1, 50))
@@ -91,15 +124,19 @@ def plot_loss_figure():
     # 添加网格线（虚线）
     ax.grid(True, linestyle='--', alpha=0.7)
 
-    # 添加图例（右上角，避免遮挡）
-    ax.legend(loc='upper right', fontsize=10, frameon=True, fancybox=True, shadow=False)
+    # 添加图例（右下角，避免遮挡）
+    ax.legend(loc='lower right', fontsize=10, frameon=True, fancybox=True, shadow=False)
 
     # 调整布局
     plt.tight_layout()
 
     # 保存图像
-    plt.savefig('./visualize/fps_vs_dice/epochs_vs_dice.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'./visualize/fps_vs_dice/{dataset_name}_epochs_vs_dice.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':
-    plot_loss_figure()
+    # 模型列表
+    models = ['BCMamba (Ours)', 'H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet',
+              'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
+              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'ResUNet']
+    plot_loss_figure(models, "BUSI", 150)

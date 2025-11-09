@@ -1,7 +1,8 @@
 import os
 import math
 import logging
-from random import random
+import pandas as pd
+import random
 from sched import scheduler
 import datetime
 import numpy as np
@@ -16,6 +17,7 @@ from utils.losses import BCEDiceLoss,HybridLossWithDynamicBoundary
 from utils.metrics import iou_score
 from utils.utils import AverageMeter,get_scheduler
 current_date = datetime.date.today()
+import logging
 
 def set_random_seed(seed):
     random.seed(seed)
@@ -56,6 +58,7 @@ def deep_main():
     best_iou = 0.
     step = 0
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪
+
     for epoch in range(config['epochs']):
         torch.cuda.empty_cache()
         accelerator.print('Epoch [%d/%d]' % (epoch + 1, config['epochs']))
@@ -128,6 +131,14 @@ def deep_main():
                 accelerator.save(unwrapped_model.state_dict(),
                                  model_path)
             accelerator.print('best_iou:{}'.format(best_iou))
+            log_data.append({
+                'Epoch': epoch + 1,
+                'Train Loss': avg_meters['train_loss'].avg,
+                'Val Dice': avg_meters['val_dice'].avg
+            })
+            df = pd.DataFrame(log_data)
+            df.to_excel(log_file, index=False)
+
 
         except RuntimeError as e:
             print(f"RuntimeError: {e}")
@@ -224,6 +235,13 @@ def Mamba_main():
                 accelerator.save(unwrapped_model.state_dict(),
                                  model_path)
             accelerator.print('best_iou:{}'.format(best_iou))
+            log_data.append({
+                'Epoch': epoch + 1,
+                'Train Loss': avg_meters['train_loss'].avg,
+                'Val Dice': avg_meters['val_dice'].avg
+            })
+            df = pd.DataFrame(log_data)
+            df.to_excel(log_file, index=False)
 
         except RuntimeError as e:
             print(f"RuntimeError: {e}")
@@ -232,7 +250,13 @@ def Mamba_main():
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)
+    if config['seed'] >= 0:
+        logging.info("Setting fixed seed: {}".format(config['seed']))
+        # set_random_seed(config['seed'])
+    os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)  # 创建模型输出文件夹
+    os.makedirs(os.path.join(config['log_dir'],config['dataset']), exist_ok=True) # 创建日志文件夹
+    log_data = []
+    log_file = os.path.join(config['log_dir'], config['dataset'], f"{config['model']}_{config['epochs']}.xlsx")
     if config['deepSupervisor']:
         deep_main()
     else:

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="cwq@172.31.226.150:22 password" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="cwq@172.31.226.209:22 password (2)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
       <paths name="172.31.226.150">
         <serverdata>
@@ -10,6 +10,20 @@
         </serverdata>
       </paths>
       <paths name="cwq@172.31.226.150:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/cwq/MedicalDP/SwinUmamba" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cwq@172.31.226.209:22 password">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cwq@172.31.226.209:22 password (2)">
         <serverdata>
           <mappings>
             <mapping deploy="/home/cwq/MedicalDP/SwinUmamba" local="$PROJECT_DIR$" />

@@ -42,6 +42,7 @@ def Mamba_main():
     model_path = os.path.join(
         config['output'],
         config['model'],
+        # 'BUSI',
         config['dataset'],
         f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
@@ -49,7 +50,7 @@ def Mamba_main():
     #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
@@ -59,7 +60,6 @@ def Mamba_main():
     #                                           collate_fn=PolypDataset.collate_fn)
     val_names = val_dataset.names
     count = 0
-    # 在 deep_main() 函数内部初始化
     top_dice_list = []
     top_k = 5
 
@@ -103,7 +103,14 @@ def Mamba_main():
             else:
                 heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
 
-    print(config['model']+" test result: test_mIoU:", avg_meters['test_iou'].avg,"test_Dice:",avg_meters['test_dice'].avg)
+    print(f'*************{config["model"]}模型的在{config["dataset"]}_测试指标结果:********')
+    print("IoU:", avg_meters['test_iou'].avg)
+    print("Dice:", avg_meters['test_dice'].avg)
+    print("ACC:", avg_meters['test_acc'].avg)
+    print("PC:", avg_meters['test_pc'].avg)
+    print("SE:", avg_meters['test_se'].avg)
+    print("SP:", avg_meters['test_sp'].avg)
+
     # for dice_val, name in sorted(top_dice_list, reverse=True):
     #     print(f"File: {name}, Dice: {dice_val:.4f}")
     #  将 top-k 文件名添加到 metrics
@@ -197,7 +204,13 @@ def deep_main():
                 heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
 
 
-    print(config['dataset']+" test result: test_mIoU:", avg_meters['test_iou'].avg,"test_Dice:",avg_meters['test_dice'].avg)
+    print(f'*************{config["model"]}模型的在{config["dataset"]}_测试指标结果:********')
+    print("IoU:", avg_meters['test_iou'].avg)
+    print("Dice:", avg_meters['test_dice'].avg)
+    print("ACC:", avg_meters['test_acc'].avg)
+    print("PC:", avg_meters['test_pc'].avg)
+    print("SE:", avg_meters['test_se'].avg)
+    print("SP:", avg_meters['test_sp'].avg)
     #  将 top-k 文件名添加到 metrics
     top_dice_sorted = sorted(top_dice_list, key=lambda x: x[0], reverse=True)[0:top_k]
     for dice, name in top_dice_sorted:
@@ -227,9 +240,9 @@ def deep_main():
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    # if config['deepSupervisor']:
-    #     deep_main()
-    # else:
-    #     Mamba_main()
+    if config['deepSupervisor']:
+        deep_main()
+    else:
+        Mamba_main()
 
-    compute_complexity(config)  # todo 测试模型参数
+    # compute_complexity(config)  # todo 测试模型参数

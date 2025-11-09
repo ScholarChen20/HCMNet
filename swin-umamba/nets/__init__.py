@@ -1,36 +1,33 @@
 from .vmunet import load_vm_model
-
-# from .vmunet_v2 import load_vm2_model,load_vm3_model,VMC_UNet,CFFMNet
+from .vmunet_v2 import load_vm2_model
 from .Swin_umamba import getmodel
 from .SwinUMambaD import get_swin_umambaD
-
 from .UMambaBot_2d import umamba_bot_model
 from .model.UNetPlus import NestedUNet
 from .model.AAUNet import AAUnet
 from .module.Hiformer import get_hiformer
 from .module.H2Former import res34_swin_MS
-# from .model.Attention_UNet import  AttU_Net
+from .model.Attention_UNet import AttU_Net
 from .BEFUnet.BEFUnet import get_BEFUNet
 from .model.U_Lite import ULite
-from .SM_Unet import get_sm_model
-# from .RS3Mamba import RSMamba
+from .BCMamba import get_sm_model,get_med_model
 from .model.UNet import UNet
 from .vision_transformer import Swin_model
-from .TransUNet.vit_seg_model import VisionTransformer
+from .TransUNet.vit_seg_model import vit_seg_transformer
 
 def net(model_name):
     if model_name == 'VMUNet':
         model = load_vm_model()
-    # elif model_name == 'VMUNetv2':
-    #     model = load_vm2_model()
+    elif model_name == 'VMUNetv2':
+        model = load_vm2_model()
     elif model_name == 'SwinUMamba':
         model = getmodel()
     elif model_name == 'SwinUMambaD':
         model = get_swin_umambaD()
     elif model_name == 'Former':
-        model = get_BEFUNet()
+        # model = get_BEFUNet()
         # model = get_hiformer()
-        # model = res34_swin_MS(224,1)
+        model = res34_swin_MS(224,1)
     elif model_name == 'UMamba':
         model = umamba_bot_model()
     elif model_name == "NewSwinUM":
@@ -38,15 +35,17 @@ def net(model_name):
     elif model_name == "UNet":
         model = UNet(3,1).cuda()
     elif model_name == "TransUNet":
-        model = VisionTransformer().cuda()
+        model = vit_seg_transformer()
     elif model_name == "BCMamba":
         model = get_sm_model()
-    elif model_name == "SM_UNet":
-        model = get_sm_model()
+    elif model_name == "MedMamba":
+        model = get_med_model()
     elif model_name == "AAUNet":
         model = AAUnet().cuda()
     elif model_name == "UNet++":
         model = NestedUNet().cuda()
+    elif model_name == "ATTUNet":
+        model = AttU_Net(n_channels=3, n_classes=1, scale_factor=1).cuda()
     elif model_name == "SwinUNet":
         model = Swin_model()
     else:

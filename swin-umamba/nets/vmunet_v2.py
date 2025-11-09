@@ -386,32 +386,17 @@ class VMUNetV3(nn.Module):
 
 
 def load_vm2_model():
-    pretrain_path = '/home/cwq/MedicalDP/SwinUmamba/data/pretrained/vmamba/vmamba_tiny_e292.pth'
+    pretrain_path = './pretrained_ckpt/vmamba_tiny_e292.pth'
     model = VMUNetV2(load_ckpt_path=pretrain_path,deep_supervision=True).cuda()
     model.load_from()
     return model
 
 def load_vm3_model():
-    pretrain_path = '/home/cwq/MedicalDP/SwinUmamba/data/pretrained/vmamba/vmamba_tiny_e292.pth'
+    pretrain_path = './pretrained_ckpt/vmamba_tiny_e292.pth'
     model = VMUNetV3(load_ckpt_path=pretrain_path,deep_supervision=True).cuda()
     model.load_from()
     return model
 
-class net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        # self.vmunet = Backbone_EfficientVSSM(out_indices=(0, 1, 2, 3), pretrained='None')
-        self.vmunet = local_vssm_tiny(drop_rate=0.2)
-    def forward(self, x):
-        x = self.vmunet(x)
-        # f1, f2, f3, f4 = self.vmunet(x)
-        # print(f1.shape, f2.shape, f3.shape, f4.shape)
-        # f1 = f1.permute(0, 3, 1, 2)  # f1 [2, 96, 64, 64]
-        # f2 = f2.permute(0, 3, 1, 2)
-        # f3 = f3.permute(0, 3, 1, 2)
-        # f4 = f4.permute(0, 3, 1, 2)
-        # return f1, f2, f3, f4
-        return x
 def cal_params_flops(model, size, logger):
     input = torch.randn(1, 3, size, size).cuda()
     flops, params = profile(model, inputs=(input,))
@@ -423,8 +408,7 @@ def cal_params_flops(model, size, logger):
     logger.info(f'flops: {flops/1e9}, params: {params/1e6}, Total params: : {total/1e6:.4f}')
 
 if __name__ == '__main__':
-    # pretrained_path = '/raid/code/mamba_all/VM-UNet/pre_trained_weights/vmamba_small_e238_ema.pth'
-    pretrained_path = '/home/cwq/MedicalDP/SwinUmamba/data/pretrained/vmamba/vmamba_tiny_e292.pth'
+    pretrained_path = './pretrained_ckpt/vmamba_tiny_e292.pth'
     model = VMUNetV3(load_ckpt_path=pretrained_path, deep_supervision=True).cuda()
     model.load_from()
     x = torch.randn(1, 3, 256, 256).cuda()

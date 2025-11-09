@@ -1,6 +1,7 @@
 import os
 import math
 import logging
+from random import random
 from sched import scheduler
 import datetime
 import numpy as np
@@ -9,16 +10,19 @@ import torch.optim as optim
 from accelerate import Accelerator
 from tqdm import tqdm
 from nets import net,get_dataset
-from nets.vision_transformer import Swin_model
-from utils.SWconfig import swin_config, get_config
 from dataset import Dataset, ThyroidDataset,get_loader,MedicineDataset
-from utils.transforms import get_transform
 from utils.config import parse_args
 from utils.losses import BCEDiceLoss,HybridLossWithDynamicBoundary
 from utils.metrics import iou_score
 from utils.utils import AverageMeter,get_scheduler
-
 current_date = datetime.date.today()
+
+def set_random_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.benchmark = True
 
 def cosine_annealing(step, alpha_max, T_max):
 
@@ -112,7 +116,12 @@ def deep_main():
                                  avg_meters['val_pc'].avg, avg_meters['val_se'].avg, avg_meters['val_sp'].avg))
 
             accelerator.wait_for_everyone()
-            model_path = os.path.join("./output",config['model'],config['model_pth']+"_150_1.pth")
+            train_epochs = config['epochs']
+            model_path = os.path.join(
+                config['output'],
+                config['model'],
+                config['dataset'],
+                f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)
@@ -135,8 +144,8 @@ def Mamba_main():
         accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
 
     if config["dataset"] != "Poply":
-        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"train"), mode="train") #785
-        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"val"), mode="val") #99
+        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"train"), mode="train", img_size=config['img_size']) #785
+        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"val"), mode="val", img_size=config['img_size']) #99
         train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=config['batch_size'], shuffle=True)
         val_loader = torch.utils.data.DataLoader(
@@ -150,7 +159,6 @@ def Mamba_main():
     else:
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
-    # print("Model train_dataset:", len(train_loader), "; val_dataset:", len(val_loader))
 
     criterion = BCEDiceLoss()
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
@@ -204,11 +212,12 @@ def Mamba_main():
                               % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg, avg_meters['val_acc'].avg,
                                  avg_meters['val_pc'].avg,avg_meters['val_se'].avg,avg_meters['val_sp'].avg))
             accelerator.wait_for_everyone()
-            results_name = config['epochs']
+            train_epochs = config['epochs']
             model_path = os.path.join(
                 config['output'],
                 config['model'],
-                f"{config['model_pth']}_{results_name}.pth" )
+                config['dataset'],
+                f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)
@@ -221,14 +230,11 @@ def Mamba_main():
             exit(1)
 
 
-
-
 if __name__ == '__main__':
     config = vars(parse_args())
+    os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)
     if config['deepSupervisor']:
         deep_main()
     else:
         Mamba_main()
     # python - m  torch.distributed.run - -nproc_per_node =0,1 train.py
-    # main()
-

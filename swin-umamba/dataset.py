@@ -90,9 +90,10 @@ class Normalize(object):
 # ])
 
 class MedicineDataset(Dataset):
-    def __init__(self, rootdir,mode):
+    def __init__(self, rootdir,mode, img_size):
         self.mode = mode
         self.rootdir = rootdir
+        self.img_size = img_size
         self.names = [i for i in os.listdir(os.path.join(self.rootdir,'images'))]
         self.image_list = [os.path.join(self.rootdir, 'images', i) for i in self.names]
         self.mask_list = [os.path.join(self.rootdir, 'masks', i.replace(".jpg",".png")) for i in self.names]
@@ -104,7 +105,7 @@ class MedicineDataset(Dataset):
             if os.path.exists(i) is False:
                 raise FileNotFoundError(f"file {i} does not exists.")
         self.val_transform = A.Compose([
-            A.Resize(256, 256),
+            A.Resize(img_size, img_size),
             A.Normalize(
                 mean=[0.45],  # 根据数据集统计调整
                 std=[0.25],  # 更适应超声低对比度特性
@@ -112,8 +113,8 @@ class MedicineDataset(Dataset):
             ),
             ToTensorV2()])  #,is_check_shapes=False
         self.train_transform =  A.Compose([
-            A.RandomResizedCrop((256,256), scale=(0.8, 1.0), p=1.0),
-            A.Resize(256, 256),
+            A.RandomResizedCrop((img_size,img_size), scale=(0.8, 1.0), p=1.0),
+            A.Resize(img_size, img_size),
             A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=30, border_mode=cv2.BORDER_CONSTANT,
                                value=0, p=0.5),
             A.HorizontalFlip(p=0.5),  # 垂直翻转

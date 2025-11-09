@@ -95,11 +95,8 @@ def main():
         accelerator.print('val_iou %.4f - val_dice %.4f' % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg))
 
         accelerator.wait_for_everyone()
-        results_name = config['epochs']
-        model_path = os.path.join(
-            config['output'],
-            config['model'],
-            f"{config['model_pth']}_{results_name}.pth")
+        model_path = os.path.join(config['model_pth'],
+                                   '{}_{}_best_model.pth'.format(config['model'], current_date))
         if avg_meters['val_iou'].avg > best_iou:
             best_iou = avg_meters['val_iou'].avg
             unwrapped_model = accelerator.unwrap_model(model)

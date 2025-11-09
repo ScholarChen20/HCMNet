@@ -10,73 +10,50 @@ import numpy as np
 
 def generate_dice(epochs, model_name, dataset_name, total_epochs):
     """
-    从Excel文件中读取真实的Dice序列，若文件不存在则使用模拟数据。
-    每5个epoch取一次平均值，并用线性插值填充到完整epoch数。
-    参数:
-        epochs: int, 要获取的epoch数量
-        model_name: str, 模型名称
-        dataset_name: str, 数据集名称
-        total_epochs: int, 训练总周期数
-
-    返回:
-        np.ndarray: 长度为 epochs 的Dice序列（已平滑并插值）
+    从Excel文件读取Dice曲线；若文件不存在，则生成模拟数据。
+    每5个epoch取平均值，再对这些平均点进行线性插值，得到完整epoch的Dice值。
     """
-    # 构造文件路径（处理空格和括号）
-    safe_model_name = model_name.replace(' ', '_').replace('(', '').replace(')', '')
-    file_path = os.path.join('./log_dir', dataset_name, f"{safe_model_name}_{total_epochs}.xlsx")
+    file_path = os.path.join('./log_dir', dataset_name, f"{model_name}_{total_epochs}.xlsx")
 
-    # 尝试读取Excel文件
     try:
         df = pd.read_excel(file_path)
         if 'Epoch' in df.columns and 'Dice' in df.columns:
-            # 确保按Epoch排序
             df = df.sort_values('Epoch').reset_index(drop=True)
-            # 截取前epochs个数据点
             dice_data = df['Dice'].values[:epochs]
-
-            # 每5个epoch取平均值
-            step = 5
-            smoothed_dice = []
-            for i in range(0, len(dice_data), step):
-                window = dice_data[i:i+step]
-                smoothed_dice.append(np.mean(window))
-
-            # 插值到完整epoch数
-            x_smooth = np.arange(1, len(smoothed_dice) + 1)  # [1, 2, ..., 30]
-            x_full = np.arange(1, epochs + 1)                 # [1, 2, ..., 150]
-            interpolated_dice = np.interp(x_full, x_smooth, smoothed_dice)
-
-            return interpolated_dice
         else:
             print(f"Warning: 文件 {file_path} 缺少 'Epoch' 或 'Dice' 列，使用模拟数据。")
+            dice_data = None
     except FileNotFoundError:
         print(f"Warning: 文件 {file_path} 未找到，使用模拟数据。")
+        dice_data = None
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
-        # 使用模拟数据作为回退
-        pass
+        dice_data = None
 
-    # 回退到模拟数据（并做相同处理）
-    x = np.linspace(0, 1, epochs)
-    dice = 0.4 + (0.78 - 0.4) * (1 - np.exp(-5 * x))  # 默认收敛曲线
-    dice += np.random.normal(0, 0.01, epochs)
-    dice = np.clip(dice, 0, 1)
+    # === 模拟数据 ===
+    if dice_data is None or len(dice_data) < epochs:
+        x = np.linspace(0, 1, epochs)
+        dice_data = 0.4 + (0.78 - 0.4) * (1 - np.exp(-5 * x)) + np.random.normal(0, 0.01, epochs)
+        dice_data = np.clip(dice_data, 0, 1)
 
-    # 每5个epoch取平均值
+    # === 每5个epoch取平均 ===
     step = 5
     smoothed_dice = []
-    for i in range(0, len(dice), step):
-        window = dice[i:i+step]
+    x_smooth = []
+    for i in range(0, len(dice_data), step):
+        window = dice_data[i:i+step]
         smoothed_dice.append(np.mean(window))
+        # 平均点对应的 epoch（例如第一个平均点对应 epoch=5）
+        x_smooth.append(min(i + step, epochs))
 
-    # 插值到完整epoch数
-    x_smooth = np.arange(1, len(smoothed_dice) + 1)
+    smoothed_dice = np.array(smoothed_dice)
+    x_smooth = np.array(x_smooth)
+
+    # === 插值到完整的 epoch 1~epochs ===
     x_full = np.arange(1, epochs + 1)
     interpolated_dice = np.interp(x_full, x_smooth, smoothed_dice)
 
     return interpolated_dice
-
-
 
 
 

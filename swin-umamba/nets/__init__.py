@@ -9,11 +9,14 @@ from .module.Hiformer import get_hiformer
 from .module.H2Former import res34_swin_MS
 from .model.Attention_UNet import AttU_Net
 from .BEFUnet.BEFUnet import get_BEFUNet
-from .model.U_Lite import ULite
 from .BCMamba import get_sm_model,get_med_model
 from .model.UNet import UNet
 from .vision_transformer import Swin_model
 from .TransUNet.vit_seg_model import vit_seg_transformer
+import torch
+import torch.nn as nn
+from einops import rearrange
+
 
 def net(model_name):
     if model_name == 'VMUNet':
@@ -24,30 +27,32 @@ def net(model_name):
         model = getmodel()
     elif model_name == 'SwinUMambaD':
         model = get_swin_umambaD()
-    elif model_name == 'Former':
-        # model = get_BEFUNet()
-        # model = get_hiformer()
-        model = res34_swin_MS(224,1)
     elif model_name == 'UMamba':
         model = umamba_bot_model()
-    elif model_name == "NewSwinUM":
-        model = ULite().cuda()
-    elif model_name == "UNet":
-        model = UNet(3,1).cuda()
-    elif model_name == "TransUNet":
-        model = vit_seg_transformer()
     elif model_name == "BCMamba":
         model = get_sm_model()
     elif model_name == "MedMamba":
         model = get_med_model()
-    elif model_name == "AAUNet":
-        model = AAUnet().cuda()
+ # -------------------------------------------
+    elif model_name == "UNet":
+        model = UNet(3,1).cuda()
     elif model_name == "UNet++":
         model = NestedUNet().cuda()
     elif model_name == "ATTUNet":
         model = AttU_Net(n_channels=3, n_classes=1, scale_factor=1).cuda()
+    elif model_name == "AAUNet":
+        model = AAUnet().cuda()
+# -------------------------------------------
     elif model_name == "SwinUNet":
         model = Swin_model()
+    elif model_name == "TransUNet":
+        model = vit_seg_transformer()
+    elif model_name == "H2Former":
+        model = res34_swin_MS(224,1)
+    elif model_name == 'BEFUNet':
+        model = get_BEFUNet()
+    elif model_name == 'HiFormer-L':
+        model = get_hiformer()
     else:
         print("No model!")
         return RuntimeError
@@ -88,17 +93,6 @@ def get_dataset(datasets):
     else:
         raise Exception('datasets name in not right!')
     return data_path
-
-
-    # from ptflops import get_model_complexity_info
-    # macs, params = get_model_complexity_info(model, (1,128, 128, 128), as_strings=True, print_per_layer_stat=True, verbose=True)
-    # print(f'Computational complexity: {macs}')
-    # print(f'Number of parameters: {params}')
-
-import torch
-import torch.nn as nn
-from einops import rearrange
-
 
 ##  Top-K Sparse Attention (TKSA)
 class Attention(nn.Module):

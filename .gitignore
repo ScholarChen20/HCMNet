@@ -1,5 +1,5 @@
 /.vscode
-assets/diceAndnsd
+swin-umamba/results/diceAndnsd
 swin-umamba/results/Ablation
 swin-umamba/results/UltraSound
 swin-umamba/nets/BCMamba.py

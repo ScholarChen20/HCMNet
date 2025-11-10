@@ -10,8 +10,10 @@ data = {
     'Model': ['BCMamba (Ours)', 'H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet',
               'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
               'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'ResUNet'],
+    'Params': [57.88, 33.68, 23.25, 25.35, 41.38, 41.69, 31.04, 36.63, 36.64, 34.88, 76.38, 22.77, 59.88, 53.22],
     'FPS': [175, 150, 160, 155, 375, 75, 180, 325, 170, 190, 300, 180, 150, 175],
-    'Dice': [90.0, 88.5, 88.8, 88.2, 88.5, 86.0, 86.0, 86.5, 84.0, 85.0, 85.5, 83.0, 82.0, 80.0]
+    'GFLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 43.73, 51.07, 147.94, 4.48, 43.91, 11.76],
+    'Dice': [90.0, 85.5, 88.8, 87.2, 88.5, 86.0, 86.0, 86.5, 84.0, 85.0, 85.5, 83.0, 82.0, 76.0]
 }
 
 df = pd.DataFrame(data)
@@ -39,14 +41,28 @@ point_size = 90
 
 def plot_complexity():
     fig, ax = plt.subplots(figsize=(10, 7))
+    # 定义参考参数量（百万级）
+    ref_params = [10, 40, 70]
+    ref_x = [40, 50, 60]  # 在x轴上的位置（可调整）
+    ref_y = [50, 50, 50]  # 在y轴上的位置（可调整）
+
+    # 绘制参考圆圈（灰色）
+    for i, (p, x, y) in enumerate(zip(ref_params, ref_x, ref_y)):
+        size = p * 25  # 缩放因子
+        ax.scatter(x, y, s=size, color='gray', alpha=0.6, edgecolors='black', linewidth=0.8)
+        ax.annotate(f'{p}M', xy=(x, y), xytext=(x + 5, y - 2),
+                   fontsize=9, ha='left', va='top', color='black')
 
     # 绘制每个点并标注模型名称
     for idx, row in df.iterrows():
         model_name = row['Model']
         x, y = row['FPS'], row['Dice']
+        params = row['Params']  # 参数量（单位：百万）
 
+        # 点大小与参数量成正比
+        size = params * 25  # 缩放因子
         # 绘制散点
-        ax.scatter(x, y, color=color_map[model_name], s=point_size, alpha=0.8)
+        ax.scatter(x, y, color=color_map[model_name], s=size, alpha=0.8, edgecolors='black', linewidth=0.8)
 
         # 添加文本标注（无箭头）
         if model_name == 'BCMamba (Ours)':

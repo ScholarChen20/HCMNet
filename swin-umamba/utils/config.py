@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--batch_size', default = 32, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default = 224, help='input patch size of network input')
-    parser.add_argument('--model', default="ATTUNet", help='training model')
+    parser.add_argument('--model', default="TransUNet", help='training model')
     parser.add_argument('--output', default="./output", help='output dir')
     parser.add_argument('--iteration', default="2", help='the number of training model')
     parser.add_argument('--deepSupervisor', default= False, type=bool,help='deepSupervisor model')

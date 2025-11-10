@@ -134,7 +134,7 @@ def deep_main():
             log_data.append({
                 'Epoch': epoch + 1,
                 'Train Loss': avg_meters['train_loss'].avg,
-                'Val Dice': avg_meters['val_dice'].avg
+                'Dice': avg_meters['val_dice'].avg
             })
             df = pd.DataFrame(log_data)
             df.to_excel(log_file, index=False)
@@ -238,7 +238,7 @@ def Mamba_main():
             log_data.append({
                 'Epoch': epoch + 1,
                 'Train Loss': avg_meters['train_loss'].avg,
-                'Val Dice': avg_meters['val_dice'].avg
+                'Dice': avg_meters['val_dice'].avg
             })
             df = pd.DataFrame(log_data)
             df.to_excel(log_file, index=False)

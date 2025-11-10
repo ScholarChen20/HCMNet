@@ -42,8 +42,8 @@ def Mamba_main():
     model_path = os.path.join(
         config['output'],
         config['model'],
-        'BUS',
-        # config['dataset'],
+        # 'BUS',
+        config['dataset'],
         f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()

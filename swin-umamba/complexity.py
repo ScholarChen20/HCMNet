@@ -13,7 +13,7 @@ data = {
     'Params': [57.88, 33.68, 23.25, 25.35, 41.38, 41.69, 31.04, 36.63, 36.64, 34.88, 76.38, 22.77, 59.88, 53.22],
     'FPS': [175, 150, 160, 155, 375, 75, 180, 325, 170, 190, 300, 180, 150, 175],
     'GFLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 43.73, 51.07, 147.94, 4.48, 43.91, 11.76],
-    'Dice': [90.0, 85.5, 88.8, 87.2, 88.5, 86.0, 86.0, 86.5, 84.0, 85.0, 85.5, 83.0, 82.0, 76.0]
+    'Dice': [85.85, 81.65, 82.80, 77.00, 76.59, 81.46, 77.21, 77.47, 76.34, 76.14, 80.46, 78.00, 81.45, 75.67]
 }
 
 df = pd.DataFrame(data)
@@ -56,7 +56,7 @@ def plot_complexity():
     # 绘制每个点并标注模型名称
     for idx, row in df.iterrows():
         model_name = row['Model']
-        x, y = row['FPS'], row['Dice']
+        x, y = row['GFLOPs'], row['Dice']
         params = row['Params']  # 参数量（单位：百万）
 
         # 点大小与参数量成正比
@@ -66,35 +66,38 @@ def plot_complexity():
 
         # 添加文本标注（无箭头）
         if model_name == 'BCMamba (Ours)':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.2),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.36),
                        fontsize=10, fontweight='bold', ha='left', va='bottom')
-        elif model_name == 'M2Snet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x - 5, y + 0.2),
+        elif model_name == 'SwinUMamba':
+            ax.annotate(model_name, xy=(x, y), xytext=(x - 10, y + 0.2),
                        fontsize=10, ha='right', va='bottom')
-        elif model_name == 'I2U-Net Large':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.2),
+        elif model_name == 'BEFUNet':
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.36),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'H2Former':
-            ax.annotate(model_name, xy=(x, y), xytext=(x - 5, y + 0.2),
+            ax.annotate(model_name, xy=(x, y), xytext=(x - 10, y + 0.34),
                        fontsize=10, ha='right', va='bottom')
         elif model_name == 'TransUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y - 0.2),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y - 0.2),
+                       fontsize=10, ha='left', va='bottom')
+        elif model_name == 'AAUNet':
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.25),
                        fontsize=10, ha='left', va='bottom')
         else:
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.2),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.3),
                        fontsize=10, ha='left', va='bottom')
 
     # 设置坐标轴标签
-    ax.set_xlabel('Frame Per Second (FPS)', fontsize=12, fontweight='medium')
+    ax.set_xlabel('Frame Per Second (GFLOPs)', fontsize=12, fontweight='medium')
     ax.set_ylabel('Average Dice Score (%)', fontsize=12, fontweight='medium')
 
     # 设置标题
-    ax.set_title('Frame Per Second (FPS) vs. Average Dice Score across 4 datasets',
+    ax.set_title('Frame Per Second (GFLOPs) vs. Average Dice Score across 4 datasets',
                  fontsize=14, fontweight='bold', pad=20)
 
     # 设置坐标轴范围
-    ax.set_xlim(40, 410)
-    ax.set_ylim(78, 92)
+    ax.set_xlim(5, 120)
+    ax.set_ylim(73, 88)
 
     # 刻度设置
     ax.set_xticks(range(50, 401, 50))

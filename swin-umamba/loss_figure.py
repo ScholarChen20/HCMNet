@@ -3,12 +3,8 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-# 示例数据（模拟收敛趋势）
 np.random.seed(42)
 import numpy as np
-
-
-
 
 def generate_dice(epochs, model_name, dataset_name, total_epochs, type):
     """
@@ -110,6 +106,6 @@ if __name__ == '__main__':
     models = ['BCMamba (Ours)', 'H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet',
               'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
               'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'ResUNet']
-    plot_dice_figure(models, "BUSI", 150)
+    plot_dice_figure(models, "BUSI", 150, "Dice")
 
 

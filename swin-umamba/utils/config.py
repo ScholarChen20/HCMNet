@@ -20,7 +20,7 @@ def parse_args():
                         default = 224, help='input patch size of network input')
     parser.add_argument('--model', default="TransUNet", help='training model')
     parser.add_argument('--output', default="./output", help='output dir')
-    parser.add_argument('--iteration', default="2", help='the number of training model')
+    parser.add_argument('--iteration', default="3", help='the number of training model')
     parser.add_argument('--deepSupervisor', default= False, type=bool,help='deepSupervisor model')
     parser.add_argument('--optimizer', type=str,
                         default='AdamW', help='choosing optimizer AdamW or SGD')

@@ -1,5 +1,5 @@
-DATA_PATH="/home/cwq/MedicalDP/SwinUmamba/data/nnUNet_raw/Dataset705_Thyroid/test/masks"
-EVAL_METRIC_PATH="/home/cwq/MedicalDP/SwinUmamba/swin-umamba/output/NewSwinUM"
+DATA_PATH="./Dataset705_Thyroid/test/masks"
+EVAL_METRIC_PATH="./output/NewSwinUM"
 GPU_ID="2,3"
 
 echo "start training...." &&
@@ -15,7 +15,7 @@ accelerate launch \
 echo "strat testing" &&
 CUDA_VISIBLE_DEVICES=1,2 python test.py &&
 
-accelerate launch --num_processes=2 --num_machines=1 --gpu_ids=0,2 --mixed_precision=fp16 --dynamo_backend=no --main_process_port=29536  train.py
+accelerate launch --num_processes=4 --num_machines=1 --gpu_ids=0,1,2,3 --mixed_precision=fp16 --dynamo_backend=no --main_process_port=29536  train.py
 
 
 #

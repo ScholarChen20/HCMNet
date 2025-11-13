@@ -66,7 +66,7 @@ def Mamba_main():
     #需要改
     mask_pred = os.path.join(config['output'], config['model'],config['dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, config['iteration'] + '_pred_BEFUNet_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

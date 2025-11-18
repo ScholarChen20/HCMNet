@@ -107,5 +107,6 @@ if __name__ == '__main__':
               'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
               'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'ResUNet']
     plot_dice_figure(models, "BUSI", 150, "Dice")
+    plot_dice_figure(models, "BUSI", 150, "Loss")
 
 

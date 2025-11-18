@@ -145,8 +145,6 @@ def deep_main():
             exit(1)
 
 def Mamba_main():
-    os.environ["WANDB_API_KEY"] = 'cdc9d021d94adc1de2796c1c3be4f798060945cf'
-    os.environ["WANDB_MODE"] = "offline"
     config = vars(parse_args())
     model = net(config['model'])
     # initialize accelerator

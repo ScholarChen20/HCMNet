@@ -153,7 +153,7 @@ def deep_main():
     model.eval()
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val" ,img_size=config['img_size'])  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False,)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False,)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))

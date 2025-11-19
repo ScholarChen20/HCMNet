@@ -198,12 +198,12 @@ class VMUNetV2(nn.Module):
         if self.deep_supervision:
             
             temp = seg_outs[::-1]  # 0 [2, 1, 256, 256] 1 [2, 1, 128, 128] 2[2,1,64,64] 3[2,1,32,32]
-            for i,o in enumerate(temp):
-                temp[i] = F.interpolate(o,(256,256),mode='bilinear',align_corners=True)
+            # for i,o in enumerate(temp):
+            #     temp[i] = F.interpolate(o,(256,256),mode='bilinear',align_corners=True)
             # print([o.shape for o in temp])
             return temp  #  [2, 1, 256, 256]
         else:
-            if self.num_classes == 1: return torch.sigmoid(seg_outs[-1])
+            if self.num_classes == 2: return torch.sigmoid(seg_outs[-1])
             else: return seg_outs[-1]
 
     
@@ -385,7 +385,7 @@ class VMUNetV3(nn.Module):
 
 def load_vm2_model():
     pretrain_path = './pretrained_ckpt/vmamba_tiny_e292.pth'
-    model = VMUNetV2(load_ckpt_path=pretrain_path,deep_supervision=True).cuda()
+    model = VMUNetV2(load_ckpt_path=pretrain_path,deep_supervision=False).cuda()
     model.load_from()
     return model
 

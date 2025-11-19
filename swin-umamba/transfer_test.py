@@ -37,8 +37,8 @@ def main():
     model_path = os.path.join(
         config['output'],
         config['model'],
-        "BUS",
-        "BUS_pretrained_150_4.pth")
+        "BUSI",
+        "BUSI_pretrained_150_3.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -52,7 +52,7 @@ def main():
 
     mask_pred = os.path.join(config['output'], config['model'], config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, '4_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, 'BUSI_3_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

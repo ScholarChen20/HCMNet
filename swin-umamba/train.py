@@ -41,15 +41,15 @@ def deep_main():
         accelerator.init_trackers('val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
 
     if config["dataset"] != "Polpy":
-        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train")
-        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "val"), mode="val")
+        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train", img_size=config['img_size'])
+        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "val"), mode="val", img_size=config['img_size'])
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
     else:
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"),batch_size=config['batch_size'], shuffle=True, train=True)   #Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"val"),batch_size=config['batch_size'],shuffle=False, train=False)
 
-    criterion = HybridLossWithDynamicBoundary()   #BCEDiceLoss()
+    criterion = BCEDiceLoss()   #BCEDiceLoss()
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     scheduler = get_scheduler(optimizer=optimizer)
     model, optimizer, scheduler, train_loader, val_loader = accelerator.prepare(model, optimizer,scheduler, train_loader, val_loader)
@@ -77,15 +77,15 @@ def deep_main():
                 out1,out2,out3,out4 = model(image)
                 mask = torch.unsqueeze(mask,dim=1)
                 '''Hybridloss'''
-                loss1 = criterion(out1, mask, current_step)
-                loss2 = criterion(out2, mask, current_step)
-                loss3 = criterion(out3, mask, current_step)
+                # loss1 = criterion(out1, mask, current_step)
+                # loss2 = criterion(out2, mask, current_step)
+                # loss3 = criterion(out3, mask, current_step)
                 '''BCEloss'''
                 # alpha_2 = cosine_annealing(step, alpha_max_2, config["epochs"])
                 # alpha_3 = cosine_annealing(step, alpha_max_3, config["epochs"])
-                # loss1 = criterion(out1, mask)
-                # loss2 = criterion(out2, mask) #* alpha_2
-                # loss3 = criterion(out3, mask) #* alpha_3
+                loss1 = criterion(out1, mask)
+                loss2 = criterion(out2, mask)
+                loss3 = criterion(out3, mask)
 
                 loss = loss1 + 0.25 * loss2 + 0.125 * loss3  #0.25 0.125
                 avg_meters['train_loss'].update(loss.item(), image.size(0))

@@ -358,9 +358,9 @@ class VMUNetV3(nn.Module):
         if self.deep_supervision:
 
             temp = seg_outs[::-1]  # 0 [2, 1, 256, 256] 1 [2, 1, 128, 128] 2[2,1,64,64] 3[2,1,32,32]
-            # out_0 = temp[0]
-            # out_1 = temp[1]
-            # out_1 = self.deconv6(out_1)
+            for i,o in enumerate(temp):
+                temp[i] = F.interpolate(o,(256,256),mode='bilinear',align_corners=True)
+            print([o.shape for o in temp])
             return temp  # [2, 1, 256, 256]
         else:
             if self.num_classes == 1:

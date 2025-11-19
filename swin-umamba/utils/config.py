@@ -5,11 +5,11 @@ from sympy import false
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default="DDTI",type=str,
+    parser.add_argument('--dataset', default="TUS",type=str,
                         help='dataset name')
     parser.add_argument('--root_dir', default="./data/STU/", type=str,
                         help='dataset root path')
-    parser.add_argument('--model_pth', default="DDTI_pretrained", type=str,
+    parser.add_argument('--model_pth', default="TUS_pretrained", type=str,
                         help='model root path')
     parser.add_argument('--lr', default=0.001, type=float, metavar='N',
                         help='learning rate')   # 默认学习率为0.001

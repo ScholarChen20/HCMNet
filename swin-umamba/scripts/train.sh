@@ -31,4 +31,4 @@ CUDA_VISIBLE_DEVICES=1 python test.py
 #    --save_path "${EVAL_METRIC_PATH}/metric_NSD.csv" &&
 ##
 echo "Done."
-rm -rf $0
+#rm -rf $0

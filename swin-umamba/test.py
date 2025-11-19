@@ -148,12 +148,12 @@ def deep_main():
         config['output'],
         config['model'],
         config['dataset'],
-        f"{config['model_pth']}_{train_epochs}.pth")
+        f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path),False)
     model.eval()
-    val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val")  # 99
+    val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val" ,img_size=config['img_size'])  # 99
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 4, shuffle=False,)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False,)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
@@ -162,7 +162,7 @@ def deep_main():
     count = 0
     top_dice_list = []  # 保存 top-k 的最大堆
     top_k = 5  # 保存 top-k 的最大堆
-    mask_pred = os.path.join(config['output'], config['model'], config['dataset'] + "_seg")
+    mask_pred = os.path.join(config['output'], config['model'], config['dataset'])
 
     # 文件路径
     file_dir = os.path.join(mask_pred, config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))

@@ -31,28 +31,28 @@ def compute_complexity(config):
 
 def main():
     config = vars(parse_args())
-    # model = net(config['model'])
-    model = net("TransUNet")
+    model = net(config['model'])
+    # model = net("TransUNet")
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        "TransUNet",
+        config['model'],
         "BUS",
-        "BUS_pretrained_150_2.pth")
+        "BUS_pretrained_150_4.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=224)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 32, shuffle=False)
+    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=256)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []
     top_k = 5
 
-    mask_pred = os.path.join(config['output'], config['model'], "STU")
+    mask_pred = os.path.join(config['output'], config['model'], config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, '2_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, '4_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -62,7 +62,10 @@ def main():
     with torch.no_grad():
         for input, target in tqdm(val_loader, total=len(val_loader)):
             input = input.cuda()
-            output  = model(input)
+            if config['deepSupervisor']:
+                output  = model(input)[0]
+            else:
+                output = model(input)
             mask = output.clone()
             mask = torch.sigmoid(mask).cpu().numpy() > 0.5
             #需要改

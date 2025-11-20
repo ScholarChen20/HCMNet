@@ -3,7 +3,7 @@ EVAL_METRIC_PATH="./output/BCMamba"
 MODEL_NAME="BCMamba"
 GPU_ID="2,3"
 
-echo "start training...." &&
+echo "---------------------------------------------start training------------------------------------------------------" &&
 accelerate launch \
       --num_processes=4 \
       --num_machines=1 \
@@ -13,7 +13,7 @@ accelerate launch \
       --main_process_port=29536 \
         train.py  &&
 
-echo "strat testing" &&
+echo "----------------------------------------------strat testing-----------------------------------------------------" &&
 CUDA_VISIBLE_DEVICES=1 python test.py
 
 #accelerate launch --num_processes=4 --num_machines=1 --gpu_ids=0,1,2,3 --mixed_precision=fp16 --dynamo_backend=no --main_process_port=29536  train.py

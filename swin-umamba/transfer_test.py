@@ -31,20 +31,21 @@ def compute_complexity(config):
 
 def main():
     config = vars(parse_args())
-    model = net(config['model'])
-    # model = net("TransUNet")
+    # model = net(config['model'])
+    model = net("ATTUNet")
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        config['model'],
+        # config['model'],
+        "ATTUNet",
         "BUSI",
         "BUSI_pretrained_150_3.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=256)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
+    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=224)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []

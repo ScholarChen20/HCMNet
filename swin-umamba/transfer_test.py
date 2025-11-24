@@ -16,6 +16,7 @@ from thop import profile
 from utils.metrics import iou_score
 from utils.utils import AverageMeter
 from ptflops import get_model_complexity_info
+from nets.BCMamba import count_parameters,convnext_tiny,freeze_pretrained_weights_only_lora
 current_date = datetime.date.today()
 
 def compute_complexity(config):
@@ -29,23 +30,71 @@ def compute_complexity(config):
     print('{:<30}  {:<8}'.format('Computational complexity: ', flops))
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
+def count_lora_parameters():
+    m = convnext_tiny(pretrained=False, lora_rank=8, lora_alpha=32.0)
+    print("Model built. Counting params before freeze:")
+    count_parameters(m)  # initially all params trainable
+
+    # Load pretrained separately if you have checkpoint, then freeze only LoRA:
+    # m = convnext_tiny(pretrained=True, lora_rank=8, lora_alpha=32.0)
+    freeze_pretrained_weights_only_lora(m)
+    print("After freezing (only LoRA trainable):")
+    count_parameters(m)
+
+    # Example forward
+    x = torch.randn(1, 3, 224, 224)
+    logits, skips = m(x)
+    print("Forward OK. logits shape:", logits.shape)
+
+
+def count_flops_and_params(model, input_shape=( 3, 256, 256)):
+    model.eval()
+
+    with torch.no_grad():
+        macs, params = get_model_complexity_info(
+            model,
+            input_res=input_shape,
+            as_strings=True,
+            print_per_layer_stat=False,
+            verbose=False
+        )
+
+    print("============== Model Complexity ==============")
+    print(f"Input shape: {input_shape}")
+    print(f"FLOPs / MACs: {macs}")
+    print(f"Params:      {params}")
+
+    # also compute trainable & LoRA params
+    total = sum(p.numel() for p in model.parameters())
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    lora = sum(p.numel() for n, p in model.named_parameters() if "lora" in n.lower())
+
+    print("----------------------------------------------")
+    print(f"Total Params:     {total / 1e6:.3f} M")
+    print(f"Trainable Params: {trainable / 1e6:.3f} M")
+    print(f"LoRA Params:      {lora / 1e6:.3f} M")
+    print("================================================")
+
+    return macs, params
+
+
 def main():
     config = vars(parse_args())
     # model = net(config['model'])
-    model = net("ATTUNet")
+    model = net("SwinUNet")
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
         # config['model'],
-        "ATTUNet",
-        "BUSI",
-        "BUSI_pretrained_150_3.pth")
+        "SwinUNet",
+        # "BUS",
+        "BUS_pretrained_200.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=224)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 2, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []
@@ -53,7 +102,7 @@ def main():
 
     mask_pred = os.path.join(config['output'], config['model'], config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, 'BUSI_3_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, 'BUS_1_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -128,4 +177,9 @@ def main():
     torch.cuda.empty_cache()
 
 if __name__ == '__main__':
-    main()
+    # main()
+
+    # count_lora_parameters()
+    config = vars(parse_args())
+    model = net(config['model'])
+    count_flops_and_params(model)

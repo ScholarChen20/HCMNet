@@ -50,7 +50,7 @@ def Mamba_main():
     #需要改
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 2, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False)
     # val_dataset = MedicineDataset(os.path.join(get_dataset(config['dataset']), "test"), mode="val")
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))

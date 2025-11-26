@@ -4,7 +4,7 @@ from .model.vmambav2 import VSSM
 import torch
 from torch import nn
 import torch.nn.functional as F
-from .mamba.local_vmamba import local_vssm_tiny
+# from .mamba.local_vmamba import local_vssm_tiny
 import logging
 logger = logging.getLogger(__name__)
 from thop import profile
@@ -304,7 +304,7 @@ class VMUNetV3(nn.Module):
         self.deconv6 = nn.ConvTranspose2d(1, 1, 3, stride=2, padding=1, output_padding=1)
 
 
-        self.vmunet = local_vssm_tiny(drop_path_rate=drop_path_rate)
+        # self.vmunet = local_vssm_tiny(drop_path_rate=drop_path_rate)
         # self.vmunet = Backbone_EfficientVSSM(depths=depths)
 
     def forward(self, x):

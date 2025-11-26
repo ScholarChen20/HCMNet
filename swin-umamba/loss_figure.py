@@ -31,10 +31,10 @@ def generate_dice(epochs, model_name, dataset_name, total_epochs, type):
         dice_data = None
 
     # === 模拟数据 ===
-    if dice_data is None or len(dice_data) < epochs:
-        x = np.linspace(0, 1, epochs)
-        dice_data = 0.4 + (0.78 - 0.4) * (1 - np.exp(-5 * x)) + np.random.normal(0, 0.01, epochs)
-        dice_data = np.clip(dice_data, 0, 1)
+    # if dice_data is None or len(dice_data) < epochs:
+    #     x = np.linspace(0, 1, epochs)
+    #     dice_data = 0.4 + (0.78 - 0.4) * (1 - np.exp(-5 * x)) + np.random.normal(0, 0.01, epochs)
+    #     dice_data = np.clip(dice_data, 0, 1)
 
     # === 每5个epoch取平均 ===
     step = 5
@@ -98,7 +98,7 @@ def plot_dice_figure(models, dataset_name, epochs, type):
     # 调整布局
     plt.tight_layout()
     # 保存图像
-    plt.savefig(f'./visualize/fps_vs_dice/{dataset_name}_epochs_vs_{type}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'./visualize/fps_vs_dice/{dataset_name}_epochs_vs_{type}.png', dpi=600, bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':

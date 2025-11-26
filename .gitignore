@@ -9,6 +9,7 @@ swin-umamba/.idea/*
 swin-umamba/data/*
 swin-umamba/pretrained_ckpt/*
 swin-umamba/nets/*
+swin-umamba/hotmap/*
 
 swin-umamba/utils/losses.py
 swin-umamba/visualize.py

@@ -5,13 +5,13 @@ from sympy import false
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default="DDTI",type=str,
+    parser.add_argument('--dataset', default="BUSI",type=str,
                         help='dataset name')
     parser.add_argument('--val_dataset', default="STU",type=str,
                         help='validation dataset name')
     parser.add_argument('--root_dir', default="./data/STU/", type=str,
                         help='dataset root path')
-    parser.add_argument('--model_pth', default="DDTI_pretrained", type=str,
+    parser.add_argument('--model_pth', default="BUSI_pretrained", type=str,
                         help='model root path')
     parser.add_argument('--lr', default=0.001, type=float, metavar='N',
                         help='learning rate')   # 默认学习率为0.001
@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--batch_size', default = 8, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default = 256, help='input patch size of network input')
-    parser.add_argument('--model', default="BCMamba", help='training model')
+    parser.add_argument('--model', default="MedMamba", help='training model')
     parser.add_argument('--output', default="./output", help='output dir')
     parser.add_argument('--iteration', default="1", help='the number of training model')
     parser.add_argument('--Ablation', default="Ablation", help='Ablation root dir')

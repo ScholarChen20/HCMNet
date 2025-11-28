@@ -92,11 +92,51 @@ class FeatureCAM:
         print(f"Heatmap shape: {heatmap.shape}")
         return heatmap, cam
 
+
+def apply_blue_colormap(cam):
+    """应用蓝调颜色映射"""
+    # 创建蓝调到红色的颜色映射
+    colormap = np.zeros((256, 3), dtype=np.uint8)
+
+    # 蓝色到青色 (0-127)
+    for i in range(128):
+        colormap[i] = [255, i * 2, 0]
+
+    # 青色到红色 (128-255)
+    for i in range(128, 256):
+        colormap[i] = [255 - (i - 128) * 2, 255, (i - 128) * 2]
+
+    heatmap_uint8 = np.uint8(255 * cam)
+    heatmap_colored = cv2.applyColorMap(heatmap_uint8, colormap)
+    heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+
+    return heatmap_colored
+
+def create_unified_blue_overlay(img, heatmap, alpha=0.7):
+    """创建统一蓝调风格的热力图叠加"""
+    if len(img.shape) == 2:
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    else:
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if len(img.shape) == 3 and img.shape[2] == 3 else img
+
+    # 如果热力图是单通道，应用颜色映射
+    if len(heatmap.shape) == 2 or (len(heatmap.shape) == 3 and heatmap.shape[2] == 1):
+        heatmap_normalized = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min() + 1e-8)
+        heatmap_colored = apply_blue_colormap(heatmap_normalized)
+    else:
+        heatmap_colored = heatmap
+
+    img_float = img_rgb.astype(np.float32) / 255.0
+    heatmap_float = heatmap_colored.astype(np.float32) / 255.0
+
+    overlay = cv2.addWeighted(img_float, 1 - alpha, heatmap_float, alpha, 0)
+    return np.uint8(overlay * 255)
+
 def main(file_name, type):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = MedFormer().to(device)
-    load_from(model)
-    # model.load_state_dict(torch.load("./output/BCMamba/BUSI/BUSI_pretrained_150_1.pth"))
+    # load_from(model)
+    model.load_state_dict(torch.load("./output/MedMamba/BUSI/BUSI_pretrained_150_1.pth"))
     model.eval()
 
     # 1. 输入图像
@@ -115,7 +155,9 @@ def main(file_name, type):
     cam = FeatureCAM(model, target_layer)
     heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
     heatmap_resized = cv2.resize(heatmap, (256, 256))
-    overlay = cv2.addWeighted(img, 0.5, heatmap_resized, 0.5, 0)
+    overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
+
+    # overlay = create_unified_blue_overlay(img, heatmap_resized)
     cv2.imwrite(os.path.join(save_path, "feature_map_cnn.png"), overlay)
     print("Saved heatmap to", save_path + "/feature_map_cnn.png")
 
@@ -123,12 +165,13 @@ def main(file_name, type):
     cam = FeatureCAM(model, target_layer)
     heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
     heatmap_resized = cv2.resize(heatmap, (256, 256))
-    overlay = cv2.addWeighted(img, 0.5, heatmap_resized, 0.5, 0)
+    overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
+    # overlay = create_unified_blue_overlay(img, heatmap_resized)
     cv2.imwrite(os.path.join(save_path, "feature_map_fuse.png"), overlay)
     print("Saved heatmap to", save_path + "/feature_map_fuse.png")
 
 
-    heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3)
+    heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type = "mamba")
     heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
 
     overlay = create_overlay(img, heatmap_resized)
@@ -136,7 +179,7 @@ def main(file_name, type):
     print("Saved heatmap to", save_path + "/feature_map_mamba.png")
 
 
-def spatial_attention_heatmap(model, x, target_layer_idx=3):
+def spatial_attention_heatmap(model, x, target_layer_idx=3, type = "cnn"):
     """基于空间注意力的热力图"""
     # features = model.vssm_encoder(x)[target_layer_idx]  # [1, 192, 32, 32]
     features = model.vmunet(x)[target_layer_idx]  # [1, 192, 32, 32]
@@ -224,10 +267,87 @@ def create_overlay(img, heatmap, alpha=0.7):
 
     return overlay
 
-if __name__ == '__main__':
-    # main("benign (13).png", "fuse")
-    # main("benign (26).png", "cnn")
-    # main("benign (195).png", "mamba")
-    main("benign (326).png", "mamba")
-    # main("malignant (185).png", "mamba")
 
+import matplotlib.pyplot as plt
+def plot_heatmap():
+    """绘制热力图"""
+    # 设置图像路径
+    hotmap_dir = '/home/cwq/MedicalDP/SwinUmamba/swin-umamba/hotmap'
+
+    # 获取所有子文件夹
+    folders = [f for f in os.listdir(hotmap_dir) if os.path.isdir(os.path.join(hotmap_dir, f)) and f not in ['images', 'masks']]
+    print(f"Found folders: {folders}")
+    print([f for f in folders])
+    # 图像名称列表
+    image_names = ['feature_map_cnn.png', 'feature_map_fuse.png', 'feature_map_mamba.png']
+
+    # 创建图形
+    fig, axes = plt.subplots(5, 5, figsize=(25, 5 * 5))
+    if len(folders) == 1:
+        axes = axes.reshape(1, -1)
+
+    # 遍历每个文件夹
+    for i, folder in enumerate(folders):
+        if folder == "images" or folder == "masks":
+            continue
+        image_paths = os.path.join(hotmap_dir, "images", folder + ".png")
+        img = cv2.imread(image_paths)
+        if img is None:
+            print(f"Warning: Input image not found at {image_paths}")
+            axes[i, 0].text(0.5, 0.5, 'Input not found', ha='center', va='center', color='red')
+            axes[i, 0].axis('off')
+        else:
+            input_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            input_img = cv2.resize(input_img, (256, 256))
+            axes[i, 0].imshow(input_img)
+            if i == 0:
+                axes[i, 0].set_title("Input")
+            axes[i, 0].axis('off')
+
+        # 加载 GT 掩码
+        masks_paths = os.path.join(hotmap_dir, "masks", folder + ".png")
+        img = cv2.imread(masks_paths)
+        if img is None:
+            print(f"Warning: Mask not found at {masks_paths}")
+            axes[i, 1].text(0.5, 0.5, 'Mask not found', ha='center', va='center', color='red')
+            axes[i, 1].axis('off')
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, (256, 256))
+            axes[i, 1].imshow(img)
+            if i == 0:
+                axes[i, 1].set_title("GT")
+            axes[i, 1].axis('off')
+
+        # 遍历每张图片
+        folder_path = os.path.join(hotmap_dir, folder)
+        for j, img_name in enumerate(image_names):
+            img_path = os.path.join(folder_path, img_name)
+            if os.path.exists(img_path):
+                img = cv2.imread(img_path)
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # 转换为RGB
+                axes[i, j + 2].imshow(img)
+                if i == 0:
+                    axes[i, j + 2].set_title(img_name.replace('.png', '').replace('_', ' '))
+                axes[i, j + 2].axis('off')
+            else:
+                axes[i, j + 2 ].text(0.5, 0.5, 'Image not found', ha='center', va='center', color='red')
+                axes[i, j + 2].axis('off')
+
+    # 调整布局并显示
+    plt.tight_layout()
+    plt.show()
+    plt.savefig('heatmap_summary.png', dpi=300, bbox_inches='tight')
+    print("Saved heatmap summary to heatmap_summary.png")
+
+if __name__ == '__main__':
+    dataset_name = ["benign (13).png", "benign (26).png",
+                    "benign (195).png", "benign (326).png",
+                    "malignant (185).png"]
+
+    # for file_name in dataset_name :
+    #     main(file_name, "fuse")
+    main("benign (13).png", "fuse")
+
+    #
+    plot_heatmap()

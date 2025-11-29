@@ -805,7 +805,7 @@ class MedMamba(nn.Module):
     def forward(self, x):
         if x.size()[1] == 1:
             x = x.repeat(1, 3, 1, 1)
-        logits = self.vmunet(x)  #17.45 3.31
+        logits = self.vmunet(x)  # 17.45 3.31
         return logits
 
     def load_from(self):

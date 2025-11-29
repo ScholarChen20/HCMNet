@@ -136,7 +136,7 @@ def main(file_name, type):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = MedFormer().to(device)
     # load_from(model)
-    model.load_state_dict(torch.load("./output/MedMamba/BUSI/BUSI_pretrained_150_1.pth"))
+    # model.load_state_dict(torch.load("./output/MedMamba/BUSI/BUSI_pretrained_150_3.pth"))
     model.eval()
 
     # 1. 输入图像
@@ -342,12 +342,12 @@ def plot_heatmap():
 
 if __name__ == '__main__':
     dataset_name = ["benign (13).png", "benign (26).png",
-                    "benign (195).png", "benign (326).png",
+                    "benign (174).png", "benign (326).png",
                     "malignant (185).png"]
 
     # for file_name in dataset_name :
     #     main(file_name, "fuse")
-    main("benign (13).png", "fuse")
 
-    #
+    # main("benign (13).png", "fuse")
+
     plot_heatmap()

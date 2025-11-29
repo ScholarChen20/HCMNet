@@ -18,7 +18,7 @@ import torch.nn as nn
 from einops import rearrange
 
 
-def net(model_name):
+def net(model_name, rank, deepSupervisor):
     if model_name == 'VMUNet':
         model = load_vm_model()
     elif model_name == 'VMUNetv2':
@@ -30,9 +30,9 @@ def net(model_name):
     elif model_name == 'UMamba':
         model = umamba_bot_model()
     elif model_name == "BCMamba":
-        model = get_sm_model()
+        model = get_sm_model(rank=rank, deep_supervised=deepSupervisor)
     elif model_name == "MedMamba":
-        model = get_med_model()
+        model = get_med_model(rank=rank, deep_supervised=deepSupervisor)
  # -------------------------------------------
     elif model_name == "UNet":
         model = UNet(3,1).cuda()

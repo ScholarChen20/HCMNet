@@ -20,7 +20,7 @@ from nets.BCMamba import count_parameters,convnext_tiny,freeze_pretrained_weight
 current_date = datetime.date.today()
 
 def compute_complexity(config):
-    model = net(config['model'])
+    model = net(config['model'], config['rank'], config['deepSupervisor'])
     # input = torch.randn(1, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     # flops, params = profile(model, inputs=(input,))
     # print('flops:{}G'.format(flops/1e9)) #转为G
@@ -81,14 +81,14 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
 def main():
     config = vars(parse_args())
     # model = net(config['model'])
-    model = net("SwinUNet")
+    model = net(config['model'], config['rank'], config['deep_supervision'])
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        # config['model'],
-        "SwinUNet",
-        # "BUS",
-        "BUS_pretrained_200.pth")
+        config['model'],
+        # "SwinUNet",
+        "BUS",
+        "BUS_pretrained_150.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -112,7 +112,7 @@ def main():
     with torch.no_grad():
         for input, target in tqdm(val_loader, total=len(val_loader)):
             input = input.cuda()
-            if config['deepSupervisor']:
+            if config['deep_supervision']:
                 output  = model(input)[0]
             else:
                 output = model(input)

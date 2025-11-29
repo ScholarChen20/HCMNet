@@ -282,7 +282,7 @@ def plot_heatmap():
     image_names = ['feature_map_cnn.png', 'feature_map_fuse.png', 'feature_map_mamba.png']
 
     # 创建图形
-    fig, axes = plt.subplots(5, 5, figsize=(25, 5 * 5))
+    fig, axes = plt.subplots(5, 5, figsize=(25, 5 * 5))  # figsize表示画布大小
     if len(folders) == 1:
         axes = axes.reshape(1, -1)
 

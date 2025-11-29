@@ -20,6 +20,7 @@ current_date = datetime.date.today()
 import logging
 
 def set_random_seed(seed):
+    """set random seed"""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -27,127 +28,47 @@ def set_random_seed(seed):
     torch.backends.cudnn.benchmark = True
 
 def cosine_annealing(step, alpha_max, T_max):
-
     return alpha_max * (1 + math.cos(math.pi * step / T_max)) / 2
 
-def deep_main():
-    os.environ["WANDB_API_KEY"] = 'cdc9d021d94adc1de2796c1c3be4f798060945cf'
-    os.environ["WANDB_MODE"] = "offline"
+def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimizer, scheduler, step, train_loader):
+    """deep_supervision training strategy
+        set L1:L2:L3 is 0.5:0.25:0.125"""
+    for iter, data in enumerate(train_loader):
+        step += iter
+        current_step = epoch * len(train_loader) + iter
+        image, mask = data
+        out1, out2, out3, out4 = model(image)
+        mask = torch.unsqueeze(mask, dim=1)
+        '''Hybridloss'''
+        # loss1 = criterion(out1, mask, current_step)
+        # loss2 = criterion(out2, mask, current_step)
+        # loss3 = criterion(out3, mask, current_step)
+        # loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
+        '''BCEloss'''
+        loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
+        avg_meters['train_loss'].update(loss.item(), image.size(0))
+        optimizer.zero_grad()
+        accelerator.backward(loss)
+        optimizer.step()
+        scheduler.step()
+
+def no_deep_supervision(accelerator, avg_meters, criterion, model, optimizer, scheduler, train_loader):
+    """no deep_supervision training strategy"""
+    for image, mask in tqdm(train_loader):
+        output = model(image)
+        mask = torch.unsqueeze(mask, dim=1)
+        loss = criterion(output, mask)
+        avg_meters['train_loss'].update(loss.item(), image.size(0))
+
+        optimizer.zero_grad()
+        accelerator.backward(loss)
+        optimizer.step()
+        scheduler.step()
+
+def main():
     config = vars(parse_args())
-    model = net(config['model'])
-    # initialize accelerator
-    accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')
-    if accelerator.is_main_process:
-        accelerator.init_trackers('val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
+    model = net(config['model'], config['rank'], config['deep_supervision'])
 
-    if config["dataset"] != "Polpy":
-        train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "train"), mode="train", img_size=config['img_size'])
-        val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "val"), mode="val", img_size=config['img_size'])
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
-    else:
-        train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"),batch_size=config['batch_size'], shuffle=True, train=True)   #Kvasir_dataset
-        val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"val"),batch_size=config['batch_size'],shuffle=False, train=False)
-
-    criterion = BCEDiceLoss()   #BCEDiceLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
-    scheduler = get_scheduler(optimizer=optimizer)
-    model, optimizer, scheduler, train_loader, val_loader = accelerator.prepare(model, optimizer,scheduler, train_loader, val_loader)
-    # model, optimizer,train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
-
-    best_iou = 0.
-    step = 0
-    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪
-
-    for epoch in range(config['epochs']):
-        torch.cuda.empty_cache()
-        accelerator.print('Epoch [%d/%d]' % (epoch + 1, config['epochs']))
-        avg_meters = {'train_loss': AverageMeter(), 'val_iou': AverageMeter(), 'val_dice': AverageMeter(),
-                      'val_acc': AverageMeter(), 'val_pc': AverageMeter(), 'val_se': AverageMeter(),
-                      'val_sp': AverageMeter()}
-        try:
-            model.train()
-            # alpha_max_2 = 0.75s
-            # alpha_max_3 = 0.50
-            for iter, data in enumerate(train_loader):
-                step += iter
-                current_step  = epoch * len(train_loader) + iter
-                image ,mask = data
-                # 检查数据范围 # print("输入数据范围:", torch.min(image), torch.max(image)) tensor(-2.1179, device='cuda:2') tensor(2.6400, device='cuda:2')
-                out1,out2,out3,out4 = model(image)
-                mask = torch.unsqueeze(mask,dim=1)
-                '''Hybridloss'''
-                # loss1 = criterion(out1, mask, current_step)
-                # loss2 = criterion(out2, mask, current_step)
-                # loss3 = criterion(out3, mask, current_step)
-                '''BCEloss'''
-                # alpha_2 = cosine_annealing(step, alpha_max_2, config["epochs"])
-                # alpha_3 = cosine_annealing(step, alpha_max_3, config["epochs"])
-                loss1 = criterion(out1, mask)
-                loss2 = criterion(out2, mask)
-                loss3 = criterion(out3, mask)
-
-                loss = loss1 + 0.25 * loss2 + 0.125 * loss3  #0.25 0.125
-                avg_meters['train_loss'].update(loss.item(), image.size(0))
-                optimizer.zero_grad()
-                accelerator.backward(loss)
-                optimizer.step()
-                scheduler.step()
-            accelerator.log({'train_loss': avg_meters['train_loss'].avg})
-            print('Training Loss : {:.4f}'.format(avg_meters['train_loss'].avg))
-            model.eval()
-
-            for image, mask in tqdm(val_loader):
-                with torch.no_grad():
-                    pred = model(image)[0]   #vmunetv2
-                pred, mask = accelerator.gather_for_metrics((pred, mask)) # torch.Size([72, 1, 256, 256]) torch.Size([72, 256, 256])
-                # print(pred.shape,mask.shape)
-                mask = torch.unsqueeze(mask,dim=1)
-                iou, dice, SE, PC, SP, ACC = iou_score(pred, mask)
-                avg_meters['val_iou'].update(iou, image.size(0))
-                avg_meters['val_dice'].update(dice, image.size(0))
-                avg_meters['val_acc'].update(ACC, image.size(0))
-                avg_meters['val_pc'].update(PC, image.size(0))
-                avg_meters['val_se'].update(SE, image.size(0))
-                avg_meters['val_sp'].update(SP, image.size(0))
-
-            accelerator.log({'val_iou': avg_meters['val_iou'].avg, 'val_dice': avg_meters['val_dice'].avg,
-                             'val_acc': avg_meters['val_acc'].avg, 'val_pc': avg_meters['val_pc'].avg,
-                             'val_se': avg_meters['val_se'].avg, 'val_sp': avg_meters['val_sp'].avg})
-            accelerator.print('val_iou %.4f - val_dice %.4f - val_acc %.4f -val_pc %.4f - val_se %.4f - val_sp %.4f'
-                              % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg, avg_meters['val_acc'].avg,
-                                 avg_meters['val_pc'].avg, avg_meters['val_se'].avg, avg_meters['val_sp'].avg))
-
-            accelerator.wait_for_everyone()
-            train_epochs = config['epochs']
-            model_path = os.path.join(
-                config['output'],
-                config['model'],
-                config['dataset'],
-                f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
-            if avg_meters['val_iou'].avg > best_iou:
-                best_iou = avg_meters['val_iou'].avg
-                unwrapped_model = accelerator.unwrap_model(model)
-                accelerator.save(unwrapped_model.state_dict(),
-                                 model_path)
-            accelerator.print('best_iou:{}'.format(best_iou))
-            log_data.append({
-                'Epoch': epoch + 1,
-                'Train Loss': avg_meters['train_loss'].avg,
-                'Dice': avg_meters['val_dice'].avg
-            })
-            df = pd.DataFrame(log_data)
-            df.to_excel(log_file, index=False)
-
-
-        except RuntimeError as e:
-            print(f"RuntimeError: {e}")
-            exit(1)
-
-def Mamba_main():
-    config = vars(parse_args())
-    model = net(config['model'])
-    # initialize accelerator
     accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')
     if accelerator.is_main_process:
         accelerator.init_trackers('ph2_val', config=config, init_kwargs={'wandb': {'name': 'swin-umamba'}})
@@ -155,16 +76,8 @@ def Mamba_main():
     if config["dataset"] != "Poply":
         train_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"train"), mode="train", img_size=config['img_size']) #785
         val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]),"val"), mode="val", img_size=config['img_size']) #99
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset, batch_size=config['batch_size'], shuffle=True)
-        val_loader = torch.utils.data.DataLoader(
-            val_dataset, batch_size=config['batch_size'], shuffle=False)
-        # train_dataset = ThyroidDataset(os.path.join(get_dataset(config["dataset"]), "train"), get_transform(train=True))
-        # val_dataset = ThyroidDataset(os.path.join(get_dataset(config["dataset"]), "val"), get_transform(train=False))
-        # train_loader = torch.utils.data.DataLoader(
-        #     train_dataset, batch_size=config['batch_size'], shuffle=True, collate_fn=train_dataset.collate_fn)
-        # val_loader = torch.utils.data.DataLoader(
-        #     val_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=val_dataset.collate_fn)
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
     else:
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
@@ -175,6 +88,7 @@ def Mamba_main():
     scheduler = get_scheduler(optimizer=optimizer)
     model, optimizer, scheduler, train_loader, val_loader = accelerator.prepare(model, optimizer, scheduler,train_loader, val_loader)
     best_iou = 0.
+    deep_supervision  = config['deep_supervision']
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪
     for epoch in range(config['epochs']):
         accelerator.print('Epoch [%d/%d]' % (epoch + 1, config['epochs']))
@@ -183,27 +97,20 @@ def Mamba_main():
                       'val_sp': AverageMeter()}
         try:
             model.train()
-            # logging.getLogger("PIL").setLevel(logging.WARNING)  # 将 PIL 的日志级别设置为 WARNING
-            for image, mask in tqdm(train_loader):
-                # print("输入数据范围:", torch.min(image), torch.max(image))                  # 检查数据范围
-                output = model(image)
-                mask = torch.unsqueeze(mask,dim=1)
-                loss = criterion(output, mask)
-                avg_meters['train_loss'].update(loss.item(), image.size(0))
-
-                optimizer.zero_grad()
-                accelerator.backward(loss)
-                optimizer.step()
-                scheduler.step()
-
+            if deep_supervision:
+                is_deep_supervision(accelerator, avg_meters, criterion, model, optimizer, scheduler, train_loader)
+            else:
+                no_deep_supervision(accelerator, avg_meters, criterion, model, optimizer, scheduler, train_loader)
             accelerator.log({'train_loss': avg_meters['train_loss'].avg})
             print('Training Loss : {:.4f}'.format(avg_meters['train_loss'].avg))
-
             model.eval()
 
             for image, mask in tqdm(val_loader):
                 with torch.no_grad():
-                    pred = model(image)  #torch.Size([24, 1, 256, 256]) torch.Size([24, 256, 256])
+                    if deep_supervision:
+                        pred = model(image)[0]
+                    else:
+                        pred = model(image)   #torch.Size([24, 1, 256, 256]) torch.Size([24, 256, 256])
                 pred, mask = accelerator.gather_for_metrics((pred, mask))
                 mask = torch.unsqueeze(mask,dim=1)
                 iou, dice, SE, PC, SP, ACC = iou_score(pred, mask)
@@ -245,7 +152,6 @@ def Mamba_main():
             print(f"RuntimeError: {e}")
             exit(1)
 
-
 if __name__ == '__main__':
     config = vars(parse_args())
     if config['seed'] >= 0:
@@ -255,8 +161,6 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(config['log_dir'],config['dataset']), exist_ok=True) # 创建日志文件夹
     log_data = []
     log_file = os.path.join(config['log_dir'], config['dataset'], f"{config['model']}_{config['epochs']}.xlsx")
-    if config['deepSupervisor']:
-        deep_main()
-    else:
-        Mamba_main()
+
+    main()
     # python - m  torch.distributed.run - -nproc_per_node =0,1 train.py

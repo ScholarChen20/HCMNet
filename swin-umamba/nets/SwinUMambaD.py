@@ -707,11 +707,11 @@ class SwinUMambaD(nn.Module):
 
 
 def load_pretrained_ckpt(
-    model, 
+    model,
     num_input_channels=1,
     ckpt_path = "./pretrained_ckpt/vmamba_tiny_e292.pth"
 ):
-    
+
     print(f"Loading weights from: {ckpt_path}")
     skip_params = ["norm.weight", "norm.bias", "head.weight", "head.bias"]
     ckpt = torch.load(ckpt_path, map_location='cpu',weights_only=False)
@@ -720,7 +720,8 @@ def load_pretrained_ckpt(
         if k in skip_params:
             print(f"Skipping weights: {k}")
             continue
-        kr = f"vssm_encoder.{k}"
+        # kr = f"vssm_encoder.{k}"
+        kr = f"{k}"
         if "patch_embed" in k and ckpt['model']["patch_embed.proj.weight"].shape[1] != num_input_channels:
             print(f"Passing weights: {k}")
             continue
@@ -734,7 +735,7 @@ def load_pretrained_ckpt(
         else:
             print(f"Passing weights: {k}")
 
-        
+
     model.load_state_dict(model_dict)
 
     return model
@@ -1129,6 +1130,14 @@ def get_swin_umambaD(use_pretrain:bool=True):
     if use_pretrain:
         model = load_pretrained_ckpt(model)
     return model
+
+def VMamba(use_pretrain:bool=True):
+    model = VSSMEncoder(**vss_args).cuda()
+    model.apply(InitWeights_He(1e-2))
+    if use_pretrain:
+        model = load_pretrained_ckpt(model)
+    return model
+
 
 # 引入获取模型参数和计算量的库
 from ptflops import get_model_complexity_info

@@ -9,10 +9,14 @@ plt.rcParams['axes.unicode_minus'] = False
 data = {
     'Model': ['BCMamba (Ours)', 'H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet',
               'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
-              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'ResUNet'],
-    'Params': [57.88, 33.68, 23.25, 25.35, 41.38, 41.69, 31.04, 36.63, 53.22, 34.88, 76.38, 22.77, 59.88, 36.64],
+              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'MedMamba'],
+    'Params': [53.00, 33.68, 31.50, 93.23, 41.38,
+               42.61, 31.04, 36.63, 53.22, 34.88,
+               76.38, 22.77, 59.88, 48.96],
     # 'FPS': [175, 150, 160, 155, 375, 75, 180, 325, 170, 190, 300, 180, 150, 175],
-    'FLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 11.76, 51.07, 147.94, 4.48, 43.91, 43.73],
+    # 'FLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 11.76, 51.07, 147.94, 4.48, 43.91, 43.73],   # 1
+    'FLOPs': [43.75, 98.65, 64.22, 98.68, 34.75, 31.82, 167.63, 212.34, 179.66, 204.06,
+              295.87, 17.59, 175.73, 49.49],
     'Dice': [85.85, 81.65, 82.80, 77.00, 76.59,
              81.46, 75.67, 77.47, 76.34, 76.14,
              80.46, 78.00, 81.45, 77.21]
@@ -32,12 +36,12 @@ def plot_complexity():
     fig, ax = plt.subplots(figsize=(10, 7))
     # 定义参考参数量（百万级）
     ref_params = [25, 50, 75]
-    ref_x = [100, 113, 130]  # 右上角位置
+    ref_x = [235, 255, 280]  # 右上角位置
     ref_y = [84, 84, 84]
 
     # 绘制参考圆圈（灰色）
     for i, (p, x, y) in enumerate(zip(ref_params, ref_x, ref_y)):
-        size = p * 50  # 缩放因子
+        size = p * 40  # 缩放因子
         ax.scatter(x, y, s=size, color='gray', alpha=0.4, edgecolors='black', linewidth=0.8)
         ax.annotate(f'{p}M', xy=(x, y), xytext=(x , y - 0.5),
                    fontsize=12, ha='left', va='top', color='black')
@@ -50,7 +54,7 @@ def plot_complexity():
         params = row['Params']  # 参数量（单位：百万）
         color = color_map[model_name]
         # 点大小与参数量成正比
-        size = params * 50  # 缩放因子
+        size = params * 40  # 缩放因子
         # 绘制散点
         # 绘制散点：内部浅色 + 边界深色
         ax.scatter(x, y, color=color, s=size, alpha=0.75, edgecolors=color, linewidth=1.5)
@@ -62,10 +66,10 @@ def plot_complexity():
             ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.36),
                        fontsize=10, fontweight='bold', ha='left', va='bottom')
         elif model_name == 'SwinUMamba':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.45),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y + 0.65),
                        fontsize=10, ha='left', va='bottom')
-        elif model_name == 'BEFUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x - 0.4, y - 1.3),
+        elif model_name == 'UNet':
+            ax.annotate(model_name, xy=(x, y), xytext=(x - 0.5, y - 1.1),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'H2Former':
             ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.55),
@@ -74,16 +78,16 @@ def plot_complexity():
             ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.54),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'SwinUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 4, y + 0.66),
+            ax.annotate(model_name, xy=(x, y), xytext=(x, y - 0.80),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'TransUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y - 0.55),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 8, y - 1),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'AAUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x, y - 1.3),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.8),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'Attention U-Net':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y - 0.55),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y - 0.65),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'ResUNet':
             ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y + 0.55),
@@ -104,11 +108,11 @@ def plot_complexity():
                  fontsize=14, fontweight='bold', pad=20)
 
     # 设置坐标轴范围
-    ax.set_xlim(-5, 158)
+    ax.set_xlim(15, 310)
     ax.set_ylim(73, 88)
 
     # 刻度设置
-    ax.set_xticks(range(0, 150, 25))
+    ax.set_xticks(range(10, 310, 50))
     ax.set_yticks(range(76, 86, 2))
     ax.tick_params(axis='both', labelsize=10)
 

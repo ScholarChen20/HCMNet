@@ -89,6 +89,7 @@ def main():
     model, optimizer, scheduler, train_loader, val_loader = accelerator.prepare(model, optimizer, scheduler,train_loader, val_loader)
     best_iou = 0.
     deep_supervision  = config['deep_supervision']
+    step = 0
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪
     for epoch in range(config['epochs']):
         accelerator.print('Epoch [%d/%d]' % (epoch + 1, config['epochs']))
@@ -98,7 +99,7 @@ def main():
         try:
             model.train()
             if deep_supervision:
-                is_deep_supervision(accelerator, avg_meters, criterion, model, optimizer, scheduler, train_loader)
+                is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimizer, scheduler, step, train_loader)
             else:
                 no_deep_supervision(accelerator, avg_meters, criterion, model, optimizer, scheduler, train_loader)
             accelerator.log({'train_loss': avg_meters['train_loss'].avg})
@@ -137,12 +138,11 @@ def main():
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)
-                accelerator.save(unwrapped_model.state_dict(),
-                                 model_path)
+                accelerator.save(unwrapped_model.state_dict(), model_path)
             accelerator.print('best_iou:{}'.format(best_iou))
             log_data.append({
                 'Epoch': epoch + 1,
-                'Train Loss': avg_meters['train_loss'].avg,
+                'TrainLoss': avg_meters['train_loss'].avg,
                 'Dice': avg_meters['val_dice'].avg
             })
             df = pd.DataFrame(log_data)

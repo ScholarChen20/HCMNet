@@ -2,24 +2,17 @@
 
 The source code will be released to the public in the near future.
 
-If you have any questions, please contact: zhangmaqun@stu.ouc.edu.cn
 
-# Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining
-
-Official repository for: *[Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining](https://arxiv.org/abs/2402.03302)*
-
-![network](https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/swin-umamba.png)
 
 ## Main Results
 
-- AbdomenMRI
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/abdomenmr.png" width="50%" />
+- BUSI
 
-- Endoscopy
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/endoscopy.png" width="50%" />
+- Dataset B
 
-- Microscopy
-<img src="https://github.com/JiarunLiu/Swin-UMamba/blob/main/assets/microscopy.png" width="50%" />
+- DDTI
+
+- SZU-TUS-BCH983
 
 ## Installation
 
@@ -91,10 +84,5 @@ We thank the authors of [nnU-Net](https://github.com/MIC-DKFZ/nnUNet), [Mamba](h
 ## Citation
 
 ```
-@article{Swin-UMamba,
-    title={Swin-UMamba: Mamba-based UNet with ImageNet-based pretraining},
-    author={Jiarun Liu and Hao Yang and Hong-Yu Zhou and Yan Xi and Lequan Yu and Yizhou Yu and Yong Liang and Guangming Shi and Shaoting Zhang and Hairong Zheng and Shanshan Wang},
-    journal={arXiv preprint arXiv:2402.03302},
-    year={2024}
-}
+
 ```

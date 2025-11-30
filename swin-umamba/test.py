@@ -16,8 +16,8 @@ from ptflops import get_model_complexity_info
 current_date = datetime.date.today()
 
 def compute_complexity(config):
-    # model = net(config['model'], config['rank'], config['deep_supervision'])
-    model = net("VMUNetv2", 4, False)
+    model = net(config['model'], config['rank'], config['deep_supervision'])
+    # model = net("VMUNetv2", 4, False)
     input = torch.randn(4, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     flops, params = profile(model, inputs=(input,))
     print('flops:{}G'.format(flops/1e9)) #转为G

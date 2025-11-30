@@ -88,7 +88,7 @@ def main():
         config['model'],
         # "SwinUNet",
         "BUS",
-        "BUS_pretrained_150.pth")
+        "BUS_pretrained_150_1.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -177,9 +177,10 @@ def main():
     torch.cuda.empty_cache()
 
 if __name__ == '__main__':
-    # main()
+    main()
 
     # count_lora_parameters()
-    config = vars(parse_args())
-    model = net(config['model'])
-    count_flops_and_params(model)
+
+    # config = vars(parse_args())
+    # model = net(config['model'], config['rank'], config['deep_supervision'])
+    # count_flops_and_params(model)

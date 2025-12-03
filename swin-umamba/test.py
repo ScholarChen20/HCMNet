@@ -94,8 +94,9 @@ def main(config):
     print("Dice:", avg_meters['test_dice'].avg)
     print("ACC:", avg_meters['test_acc'].avg)
     print("PC:", avg_meters['test_pc'].avg)
-    print("SE:", avg_meters['test_se'].avg)
     print("SP:", avg_meters['test_sp'].avg)
+    print("SE:", avg_meters['test_se'].avg)
+
 
 
     top_dice_sorted = sorted(top_dice_list, key=lambda x: x[0], reverse=True)[0:top_k]

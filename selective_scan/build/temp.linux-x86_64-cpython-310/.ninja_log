@@ -1,0 +1,7 @@
+# ninja log v7
+1	9709	1762352769038914277	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cus/selective_scan_core_fwd.o	60081aa52993625
+0	18449	1762352769038914277	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cus/selective_scan.o	c1353584c628409a
+1	29524	1762352769038914277	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cus/selective_scan_core_bwd.o	b8c29279c88da1ea
+6	13682	1762352799022915076	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cusoflex/selective_scan_core_fwd.o	e7c031a64d0d436a
+6	18218	1762352799022915076	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cusoflex/selective_scan_oflex.o	2638d16e9a444f47
+6	47766	1762352799022915076	/home/cwq/package/selective_scan/build/temp.linux-x86_64-cpython-310/csrc/selective_scan/cusoflex/selective_scan_core_bwd.o	90883f80ee0e13e8

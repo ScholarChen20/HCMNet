@@ -39,12 +39,12 @@ def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimi
         image, mask = data
         out1, out2, out3, out4 = model(image)
         mask = torch.unsqueeze(mask, dim=1)
-        '''Hybridloss'''
+        '''HybridLoss'''
         # loss1 = criterion(out1, mask, current_step)
         # loss2 = criterion(out2, mask, current_step)
         # loss3 = criterion(out3, mask, current_step)
         # loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
-        '''BCEloss'''
+        '''BCEDiceLoss'''
         loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
         avg_meters['train_loss'].update(loss.item(), image.size(0))
         optimizer.zero_grad()

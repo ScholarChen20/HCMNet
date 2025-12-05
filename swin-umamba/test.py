@@ -16,8 +16,8 @@ from ptflops import get_model_complexity_info
 current_date = datetime.date.today()
 
 def compute_complexity(config):
-    # model = net(config['model'], config['rank'], config['deep_supervision'])
-    model = net("VMUNetv2", 4, False)
+    model = net(config['model'], config['rank'], config['deep_supervision'])
+    # model = net("VMUNetv2", 4, False)
     input = torch.randn(4, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     flops, params = profile(model, inputs=(input,))
     print('flops:{}G'.format(flops/1e9)) #转为G
@@ -40,7 +40,7 @@ def main(config):
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 12, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
     # val_loader = torch.utils.data.DataLoader(dataset=val_dataset,batch_size=24,shuffle=False,collate_fn=PolypDataset.collate_fn)
 
@@ -94,8 +94,9 @@ def main(config):
     print("Dice:", avg_meters['test_dice'].avg)
     print("ACC:", avg_meters['test_acc'].avg)
     print("PC:", avg_meters['test_pc'].avg)
-    print("SE:", avg_meters['test_se'].avg)
     print("SP:", avg_meters['test_sp'].avg)
+    print("SE:", avg_meters['test_se'].avg)
+
 
 
     top_dice_sorted = sorted(top_dice_list, key=lambda x: x[0], reverse=True)[0:top_k]

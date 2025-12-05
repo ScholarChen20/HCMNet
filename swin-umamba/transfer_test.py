@@ -80,29 +80,29 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
 
 def main():
     config = vars(parse_args())
-    # model = net(config['model'])
+    # model = net('VMUNetv2', config['rank'], config['deep_supervision'])
     model = net(config['model'], config['rank'], config['deep_supervision'])
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
         config['model'],
-        # "SwinUNet",
+        # "VMUNetv2",
         "BUS",
-        "BUS_pretrained_150.pth")
+        "BUS_pretrained_150_4.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=224)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 2, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []
     top_k = 5
 
-    mask_pred = os.path.join(config['output'], config['model'], config['val_dataset'])
+    mask_pred = os.path.join(config['output'], "TransUNet", config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, 'BUS_1_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, 'BUS_4_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -113,7 +113,7 @@ def main():
         for input, target in tqdm(val_loader, total=len(val_loader)):
             input = input.cuda()
             if config['deep_supervision']:
-                output  = model(input)[0]
+                output  = model(input)
             else:
                 output = model(input)
             mask = output.clone()
@@ -177,9 +177,10 @@ def main():
     torch.cuda.empty_cache()
 
 if __name__ == '__main__':
-    # main()
+    main()
 
     # count_lora_parameters()
-    config = vars(parse_args())
-    model = net(config['model'])
-    count_flops_and_params(model)
+
+    # config = vars(parse_args())
+    # model = net(config['model'], config['rank'], config['deep_supervision'])
+    # count_flops_and_params(model)

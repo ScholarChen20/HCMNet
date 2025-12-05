@@ -67,7 +67,7 @@ def plot_dice_figure(models, dataset_name, epochs, type):
         data[model] = generate_dice(epochs, model, dataset_name, epochs, type)
     df = pd.DataFrame(data)
     # 动态生成颜色（使用 matplotlib 的 tab10 调色板）
-    colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+    colors = plt.cm.Set3(np.linspace(0, 1, len(models)))
     color_map = {model: colors[i] for i, model in enumerate(models)}
 
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -109,7 +109,7 @@ def plot_loss_figure(models, dataset_name, epochs, type='TrainLoss'):
         data[model] = generate_dice(epochs, model, dataset_name, epochs, type)
     df = pd.DataFrame(data)
     # 动态生成颜色（使用 matplotlib 的 tab10 调色板）
-    colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+    colors =plt.cm.Set3(np.linspace(0, 1, len(models)))
     color_map = {model: colors[i] for i, model in enumerate(models)}
 
     fig, ax = plt.subplots(figsize=(10, 6))

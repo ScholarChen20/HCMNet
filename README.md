@@ -17,7 +17,7 @@ If you have any questions, please contact: chen_wenqin2002@163.com
 
 (4)[DDTI:](https://drive.google.com/file/d/1wwlsEhwfSyvQsJBRjeDLhUjqZh8eaH2R/view) L. Pedraza, C. Vargas, F. Narvaez, O. Duran, E. Munoz, and E. Romero,  “An open access thyroid ultrasound image database,” in 10th International symposium on medical information processing and analysis, vol. 9287, pp. 188–193, SPIE, 2015.
 
-(5)[SZU-BCH-TUS983:](https://github.com/ScholarChen20/HCMNet)
+(5)[SZU-BCH-TUS983:](https://github.com/ScholarChen20/HCMNet) Private dataset.
 
 ## Main Results
 

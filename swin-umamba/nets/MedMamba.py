@@ -763,7 +763,7 @@ class VSSM(nn.Module):
             # if s < 3:
             #     x = self.downsamples[s](x)
 
-        return x_ret
+        return x_ret       # 输出特征shape大小为 [B, C, H, W]
         # x = self.patch_embed(x)
         # if self.ape:
         #     x = x + self.absolute_pos_embed

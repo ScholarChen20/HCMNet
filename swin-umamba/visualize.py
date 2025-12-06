@@ -17,8 +17,8 @@ def load_images(input_dir, gt_dir, pred_dirs):
 
 
 def ablation_segmentation_results(input_images, gt_images, pred_images, methods):
-    num_samples = len(input_images)
-    num_methods = len(methods)
+    num_samples = len(input_images)  # 8
+    num_methods = len(methods)   # 10
     fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(10, num_samples * 1.5))
     plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.05, right=0.95)
 

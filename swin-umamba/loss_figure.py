@@ -68,6 +68,8 @@ def plot_dice_figure(models, dataset_name, epochs, type):
     df = pd.DataFrame(data)
     # 动态生成颜色（使用 matplotlib 的 tab10 调色板）
     colors = plt.cm.Set3(np.linspace(0, 1, len(models)))
+    colors[2] = (1, 0.2, 0.2, 1)      #medmamba 红色
+    colors[13] = (0.2, 0.8, 0.2, 1)      #medmamba 深绿色
     color_map = {model: colors[i] for i, model in enumerate(models)}
 
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -76,7 +78,8 @@ def plot_dice_figure(models, dataset_name, epochs, type):
             df['Epoch'],
             df[model],
             color=color_map[model],
-            linewidth=1.5,    # 线条宽度
+            linewidth=2.0,    # 线条宽度
+            alpha = 0.9,
             label=model
         )
 
@@ -95,7 +98,7 @@ def plot_dice_figure(models, dataset_name, epochs, type):
     # 添加网格线（虚线）
     ax.grid(True, linestyle='--', alpha=0.7)
     # 添加图例（右下角，避免遮挡）
-    ax.legend(loc='lower right', fontsize=10, frameon=True, fancybox=True, shadow=False)
+    ax.legend(loc='lower right', fontsize=10, frameon=True, fancybox=True, shadow=False, edgecolor='black')
     # 调整布局
     plt.tight_layout()
     # 保存图像

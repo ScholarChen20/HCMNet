@@ -1,7 +1,5 @@
 /.vscode
-swin-umamba/results/diceAndnsd
-swin-umamba/results/Ablation
-swin-umamba/results/UltraSound
+swin-umamba/results/*
 swin-umamba/nets/BCMamba.py
 swin-umamba/nets/SwinUMambaD.py
 

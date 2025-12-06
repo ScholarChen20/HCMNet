@@ -1,4 +1,4 @@
-# BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation
+# BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation 🚀
 
 Official repository for: *[BC-Mamba: Boundary-Aware Contextual CNNs-Mamba for Accurate Ultrasound Image Segmentation](https://github.com/ScholarChen20/HCMNet)*
 
@@ -34,6 +34,9 @@ If you have any questions, please contact: chen_wenqin2002@163.com
 ```shell
 conda create -n bcmamba python=3.10
 conda activate bcmamba
+
+cd selective_scan
+pip install .
 
 pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0   (cuda 11.8)
 pip install causal-conv1d==1.4.0

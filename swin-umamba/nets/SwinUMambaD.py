@@ -1039,7 +1039,7 @@ class TIF(nn.Module):
     def __init__(self, dim_s, dim_l):
         super().__init__()
         self.transformer_s = Transformer(dim=dim_s, depth=1, heads=3, dim_head=32, mlp_dim=128)
-        self.transformer_l = Transformer(dim=dim_l, depth=1, heads=1, dim_head=64, mlp_dim=256)
+        self.transformer_l = Transformer(dim=dim_l, depth=1, heads=3, dim_head=32, mlp_dim=128)
         # self.mamba_l = MambaLayer(dim_l)
         # self.mamba_s = MambaLayer(dim_s)
         self.norm_s = nn.LayerNorm(dim_s)
@@ -1083,16 +1083,17 @@ class TIF(nn.Module):
         # ee = self.sigmoid(ee) * e_in
         # ee = ee.reshape(b_e, c_e,-1).permute(0, 2, 1)  # [B, N, C]
         #channel attention
-        e_in = ee
-        ee = ee.mean((2,3),keepdim=True)  # [B, C, 1, 1]
-        ee = self.fc2(self.relu(self.fc1(ee)))  # [B, C, 1, 1]
-        ee = self.sigmoid(ee) * e_in  # [B, C, H, W]
-        ee = ee.reshape(b_r, c_r,-1).permute(0, 2, 1)  # [B, N, C]
+        # e_in = ee
+        # ee = ee.mean((2,3),keepdim=True)  # [B, C, 1, 1]
+        # ee = self.fc2(self.relu(self.fc1(ee)))  # [B, C, 1, 1]
+        # ee = self.sigmoid(ee) * e_in  # [B, C, H, W]
+        # ee = ee.reshape(b_r, c_r,-1).permute(0, 2, 1)  # [B, N, C]
         #fusion feature
         r = self.transformer_s(torch.cat([e_t, r], dim=1))[:, 1:, :]
-        e = self.transformer_l(torch.cat([r_t, ee], dim=1))[:, 1:, :]
+        e = self.transformer_l(torch.cat([r_t, e], dim=1))[:, 1:, :]
         e = e.permute(0, 2, 1).reshape(b_e, c_e, h_e, w_e)
         r = r.permute(0, 2, 1).reshape(b_r, c_r, h_r, w_r)
+
         # r_fuse = torch.cat([e_t, rr], dim=1)[:, 1:, :]
         # e_fuse = torch.cat([r_t, e], dim=1)[:, 1:, :]
         # r = self.mamba_s(r_fuse.permute(0, 2, 1))   #[:,1:,:] 取出第一个元素，即cls token

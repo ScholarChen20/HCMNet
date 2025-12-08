@@ -32,7 +32,7 @@ def main(config):
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        config['model'],
+        config['model'], config['Ablation'],
         config['dataset'],
         f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
@@ -40,7 +40,7 @@ def main(config):
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 48, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
     # val_loader = torch.utils.data.DataLoader(dataset=val_dataset,batch_size=24,shuffle=False,collate_fn=PolypDataset.collate_fn)
 
@@ -125,6 +125,6 @@ def main(config):
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    main(config)
-
-    # compute_complexity(config)  # todo 测试模型参数
+    # main(config)
+    #
+    compute_complexity(config)  # todo 测试模型参数

@@ -82,7 +82,7 @@ def main():
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
 
-    criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary
+    criterion = BCEDiceLoss()  #  HybridLossWithDynamicBoundary
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     # model, optimizer, train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
     scheduler = get_scheduler(optimizer=optimizer)
@@ -132,7 +132,7 @@ def main():
             train_epochs = config['epochs']
             model_path = os.path.join(
                 config['output'],
-                config['model'],
+                config['model'], config['Ablation'],
                 config['dataset'],
                 f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
             if avg_meters['val_iou'].avg > best_iou:

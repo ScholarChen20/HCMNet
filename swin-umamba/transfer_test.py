@@ -20,7 +20,7 @@ from nets.BCMamba import count_parameters,convnext_tiny,freeze_pretrained_weight
 current_date = datetime.date.today()
 
 def compute_complexity(config):
-    model = net(config['model'], config['rank'], config['deepSupervisor'])
+    model = net(config['model'], config['rank'], config['deep_supervision'])
     # input = torch.randn(1, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     # flops, params = profile(model, inputs=(input,))
     # print('flops:{}G'.format(flops/1e9)) #转为G
@@ -31,7 +31,7 @@ def compute_complexity(config):
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
 def count_lora_parameters():
-    m = convnext_tiny(pretrained=False, lora_rank=8, lora_alpha=32.0)
+    m = convnext_tiny(pretrained=False, lora_rank=8, lora_alpha=8.0)
     print("Model built. Counting params before freeze:")
     count_parameters(m)  # initially all params trainable
 
@@ -67,7 +67,8 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
     # also compute trainable & LoRA params
     total = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    lora = sum(p.numel() for n, p in model.named_parameters() if "lora" in n.lower())
+    # lora = sum(p.numel() for n, p in model.named_parameters() if "lora" in n.lower())
+    lora = sum(p.numel() for n,p in model.named_parameters() if ("lora_A" in n) or ("lora_B" in n))
 
     print("----------------------------------------------")
     print(f"Total Params:     {total / 1e6:.3f} M")
@@ -80,15 +81,15 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
 
 def main():
     config = vars(parse_args())
-    # model = net('VMUNetv2', config['rank'], config['deep_supervision'])
-    model = net(config['model'], config['rank'], config['deep_supervision'])
+    model = net('UNet', config['rank'], config['deep_supervision'])
+    # model = net(config['model'], config['rank'], config['deep_supervision'])
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        config['model'],
-        # "VMUNetv2",
-        "BUS",
-        "BUS_pretrained_150_4.pth")
+        # config['model'],
+        "UNet",
+        "BUSI",
+        "BUSI_pretrained_150_4.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
@@ -100,9 +101,9 @@ def main():
     top_dice_list = []
     top_k = 5
 
-    mask_pred = os.path.join(config['output'], "TransUNet", config['val_dataset'])
+    mask_pred = os.path.join(config['output'], "UNet", config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, 'BUS_4_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, '4_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -113,7 +114,7 @@ def main():
         for input, target in tqdm(val_loader, total=len(val_loader)):
             input = input.cuda()
             if config['deep_supervision']:
-                output  = model(input)
+                output  = model(input)[0]
             else:
                 output = model(input)
             mask = output.clone()
@@ -142,13 +143,13 @@ def main():
             else:
                 heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
 
-    print(f'*************{config["model"]}模型的在 STU 测试指标结果:********')
+    print(f'*************UNet模型的在 STU 测试指标结果:**************')
     print("IoU:", avg_meters['test_iou'].avg)
     print("Dice:", avg_meters['test_dice'].avg)
     print("ACC:", avg_meters['test_acc'].avg)
     print("PC:", avg_meters['test_pc'].avg)
-    print("SE:", avg_meters['test_se'].avg)
     print("SP:", avg_meters['test_sp'].avg)
+    print("SE:", avg_meters['test_se'].avg)
 
     # for dice_val, name in sorted(top_dice_list, reverse=True):
     #     print(f"File: {name}, Dice: {dice_val:.4f}")
@@ -177,10 +178,16 @@ def main():
     torch.cuda.empty_cache()
 
 if __name__ == '__main__':
-    main()
+    # main()
 
     # count_lora_parameters()
 
-    # config = vars(parse_args())
+    config = vars(parse_args())
+    compute_complexity(config)
     # model = net(config['model'], config['rank'], config['deep_supervision'])
     # count_flops_and_params(model)
+
+    # input = torch.randn(1, 3, 256, 256).cuda()  # 确保输入在 GPU 上
+    # macs, params = get_model_complexity_info(model, (3,256,256), as_strings=True, print_per_layer_stat=True)
+    # print(f"模型 Params and FLOPs:{params}, {macs}")
+

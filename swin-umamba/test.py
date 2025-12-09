@@ -18,7 +18,7 @@ current_date = datetime.date.today()
 def compute_complexity(config):
     model = net(config['model'], config['rank'], config['deep_supervision'])
     # model = net("VMUNetv2", 4, False)
-    input = torch.randn(4, 3, 256, 256).cuda()  # 确保输入在 GPU 上
+    input = torch.randn(1, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     flops, params = profile(model, inputs=(input,))
     print('flops:{}G'.format(flops/1e9)) #转为G
     print('params:{}M'.format(params/1e6)) #转为M
@@ -34,13 +34,14 @@ def main(config):
         config['output'],
         config['model'], config['Ablation'],
         config['dataset'],
-        f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
+        f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth")
+        # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 2, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
     # val_loader = torch.utils.data.DataLoader(dataset=val_dataset,batch_size=24,shuffle=False,collate_fn=PolypDataset.collate_fn)
 
@@ -50,8 +51,8 @@ def main(config):
     top_k = 5
 
     #掩码pred-生成路径
-    mask_pred = os.path.join(config['output'], config['model'], config['dataset'])
-    file_dir = os.path.join(mask_pred, config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    mask_pred = os.path.join(config['output'], config['model'], config['Ablation'], config['dataset'])
+    file_dir = os.path.join(mask_pred, config['ablaType'] + config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -125,6 +126,6 @@ def main(config):
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    # main(config)
+    main(config)
     #
     compute_complexity(config)  # todo 测试模型参数

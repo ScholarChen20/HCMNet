@@ -8,20 +8,20 @@ plt.rcParams['axes.unicode_minus'] = False
 # 46.50 49.67   ----  48.96 39.47
 # 示例数据（与目标图一致）
 data = {
-    'Model': ['BCMamba (Ours)', 'H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet',
-              'BEFUNet', 'UNet', 'UNet++', 'AAUNet', 'Attention U-Net',
-              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'MedMamba'],
-    'Params': [53.00, 33.68, 31.50, 93.23, 41.38,
-               42.61, 31.04, 36.63, 53.22, 34.88,
+    'Model': ['H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet','BEFUNet',
+              'UNet', 'UNet++', 'AAU-net', 'Attention U-Net',
+              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'MedMamba (Ours)'],
+    'Params': [33.68, 31.50, 93.23, 41.38, 42.61,
+               31.04, 36.63, 53.22, 34.88,
                76.38, 22.77, 59.88, 46.50],
     # 'FPS': [175, 150, 160, 155, 375, 75, 180, 325, 170, 190, 300, 180, 150, 175],
     # 'FLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 11.76, 51.07, 147.94, 4.48, 43.91, 43.73],   # 1
-    'FLOPs': [43.75, 98.65, 64.22, 98.68, 34.75,
-              31.82, 167.63, 212.34, 179.66, 204.06,
-              295.87, 17.59, 175.73, 11.62],
-    'Dice': [85.85, 81.65, 82.80, 77.00, 76.59,
-             81.46, 75.67, 77.47, 76.34, 76.14,
-             80.46, 78.00, 81.45, 77.21]
+    'FLOPs': [98.65, 64.22, 98.68, 34.75, 31.82,
+              167.63, 212.34, 179.66, 204.06,
+              295.87, 17.59, 175.73, 22.62],
+    'Dice': [81.54, 82.06, 78.37, 75.72, 81.36,
+             77.31, 77.90, 76.59, 77.68,
+             80.32, 82.48, 83.53, 85.65]
 }
 
 df = pd.DataFrame(data)
@@ -64,10 +64,10 @@ def plot_complexity():
         # 在中心添加加粗点（颜色与边界一致）
         ax.scatter(x, y, color=color, s=8, linewidth=2, marker='o', zorder=5)
         # 添加文本标注（无箭头）
-        if model_name == 'BCMamba (Ours)':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.36),
-                       fontsize=10, fontweight='bold', ha='left', va='bottom')
-        elif model_name == 'SwinUMamba':
+        # if model_name == 'BCMamba (Ours)':
+        #     ax.annotate(model_name, xy=(x, y), xytext=(x + 10, y + 0.36),
+        #                fontsize=10, fontweight='bold', ha='left', va='bottom')
+        if model_name == 'SwinUMamba':
             ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y + 0.65),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'UNet':

@@ -395,6 +395,7 @@ class VSSBlock(nn.Module):
         self.ln_1 = norm_layer(hidden_dim)
         self.self_attention = SS2D(d_model=hidden_dim, dropout=attn_drop_rate, d_state=d_state, **kwargs)
         self.drop_path = DropPath(drop_path)
+        # self.mamba = MambaLayer(dim = hidden_dim)
 
     def forward(self, input: torch.Tensor):
         x = input + self.drop_path(self.self_attention(self.ln_1(input)))
@@ -720,8 +721,8 @@ def load_pretrained_ckpt(
         if k in skip_params:
             print(f"Skipping weights: {k}")
             continue
-        # kr = f"vssm_encoder.{k}"
-        kr = f"{k}"
+        kr = f"vssm_encoder.{k}"
+        # kr = f"{k}"
         if "patch_embed" in k and ckpt['model']["patch_embed.proj.weight"].shape[1] != num_input_channels:
             print(f"Passing weights: {k}")
             continue

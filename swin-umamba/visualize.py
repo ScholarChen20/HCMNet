@@ -313,6 +313,51 @@ def show():
     save_imgs_from_path(img_path=input_images, msk_path=gt_images,msk_pred_path=msk_pred,i=0, datasets="None", threshold=0.5,
               test_data_name='test', save_path=None)
 
+def simple_visualize_comparison(input_images, gt_images, pred_images, methods, save_path=None):
+    """
+    简化版可视化：每行展示原始图像 + GT + 各方法预测掩码
+    """
+    num_samples = len(input_images)
+    num_methods = len(methods)
+
+    # 创建子图：num_samples 行 × (1 + 1 + num_methods) 列
+    fig, axes = plt.subplots(num_samples, 1 + 1 + num_methods, figsize=(15, num_samples * 2))
+    plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.05, right=0.95, bottom=0.05)
+
+    for i in range(num_samples):
+        # ==================== 第一列：原始图像 ====================
+        input_img = cv2.cvtColor(cv2.imread(input_images[i]), cv2.COLOR_BGR2RGB)
+        input_img = cv2.resize(input_img, (256, 256))
+        axes[i, 0].imshow(input_img)
+        axes[i, 0].axis('off')
+
+        # ==================== 第二列：GT ====================
+        gt_mask = cv2.imread(gt_images[i], cv2.IMREAD_GRAYSCALE)
+        gt_mask = cv2.resize(gt_mask, (256, 256))
+        axes[i, 1].imshow(gt_mask, cmap='gray')
+        axes[i, 1].axis('off')
+
+        # ==================== 第三列及以后：各方法预测 ====================
+        for j, method in enumerate(methods):
+            pred_mask = cv2.imread(pred_images[method][i], cv2.IMREAD_GRAYSCALE)
+            if pred_mask is None:
+                pred_mask = np.zeros((256, 256), dtype=np.uint8)
+            pred_mask = cv2.resize(pred_mask, (256, 256))
+            axes[i, j + 2].imshow(pred_mask, cmap='gray')
+            axes[i, j + 2].axis('off')
+
+    # 设置列标题（在第一行下方）
+    col_labels = ['Original Image', 'GT'] + methods
+    for j, label in enumerate(col_labels):
+        if j == 0:
+            axes[0, j].set_title(label, fontsize=10, pad=10)
+        else:
+            axes[0, j].set_title(label, fontsize=10, pad=10)
+
+    plt.tight_layout(pad=1.0)
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.show()
 
 if __name__ == '__main__':
     dataset_name = ['Site1','Site2','Site3','Site4']
@@ -339,8 +384,11 @@ if __name__ == '__main__':
             'Ours': './visualize/VisualizeResult/Ours'
         }
         # --------------------------对比实验结果可视化--------------------------
-        input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)          # 加载图像路径
-        plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
+        input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)
+        methods = list(pred_dirs.keys())
+        simple_visualize_comparison(input_images, gt_images, pred_images, methods)
+        # 加载图像路径
+        # plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
     elif type == "Transfer":
         input_dir = './visualize/Transfer-Visualize/images'
         gt_dir = './visualize/Transfer-Visualize/masks'

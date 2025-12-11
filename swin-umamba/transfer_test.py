@@ -81,29 +81,29 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
 
 def main():
     config = vars(parse_args())
-    model = net('H2Former', config['rank'], config['deep_supervision'])
+    model = net('MedMamba', config['rank'], config['deep_supervision'])
     # model = net(config['model'], config['rank'], config['deep_supervision'])
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
         # config['model'],
-        "H2Former",
+        "MedMamba", config['Ablation'],
         "DDTI",
-        "DDTI_pretrained_150_1.pth")
+        "DDTI_pretrained_150_fuse_3.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=224)
+    val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=256)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []
     top_k = 5
 
-    mask_pred = os.path.join(config['output'], "H2Former", config['val_dataset'])
+    mask_pred = os.path.join(config['output'], "MedMamba", config['Ablation'], config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, '1_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, 'fuse3_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -114,7 +114,7 @@ def main():
         for input, target in tqdm(val_loader, total=len(val_loader)):
             input = input.cuda()
             if config['deep_supervision']:
-                output  = model(input)
+                output  = model(input)[0]
             else:
                 output = model(input)
             mask = output.clone()
@@ -143,7 +143,7 @@ def main():
             else:
                 heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
 
-    print(f'*************H2Former模型的在 STU 测试指标结果:**************')
+    print(f'*************MedMamba模型的在 STU 测试指标结果:**************')
     print("IoU:", avg_meters['test_iou'].avg)
     print("Dice:", avg_meters['test_dice'].avg)
     print("ACC:", avg_meters['test_acc'].avg)

@@ -113,9 +113,9 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
     """
     num_samples = len(input_images)
     num_methods = len(methods)
-    assert num_methods == 10, "需要10种分割方法"
+    assert num_methods == 13, "需要10种分割方法"
 
-    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(15, num_samples * 1.7))  #``figsize``控制图的大小,行距离、列距离
+    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(20, num_samples * 1.5))  #``figsize``控制图的大小,行距离、列距离
     plt.subplots_adjust(wspace=0.05, hspace=0.05,left=0.05, right=0.95,top=0.95, bottom=0.05) #left=0.05,减少左边距,上边距
 
     for i in range(num_samples):
@@ -356,16 +356,18 @@ def simple_visualize_comparison(input_images, gt_images, pred_images, methods, s
 
     plt.tight_layout(pad=1.0)
     if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=1000, bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':
     dataset_name = ['Site1','Site2','Site3','Site4']
     # methods = ['DeepAll', 'FedDG', 'DoFe', 'RAM-DSIR', 'TriD', 'DDG(Ours)']
-    methods = ['UNet', 'UNet++', 'AAU-net', 'Swin-UNet', 'HiFormer-L', 'H2Former', 'BEFUNet', 'U-Mamba', 'Swin-UMamba','Ours']  # 对比方法
+    methods = ['UNet', 'UNet++', 'Attention UNet', 'AAU-net',
+               'SwinUNet', 'TransUNet', 'HiFormer-L', 'H2Former', 'BEFUNet',
+               'U-Mamba', 'Swin-UMamba','VM-UNet-V2', 'Ours']  # 对比方法
     ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'BC-Mamba']
 
-    type = "Comparison"
+    type = "Transfer"
 
     if type == "Comparison":
         # 对比实验图像路径
@@ -374,13 +376,16 @@ if __name__ == '__main__':
         pred_dirs = {
             'UNet': './visualize/VisualizeResult/UNet',
             'UNet++': './visualize/VisualizeResult/UNet++',
+            'Attention UNet': './visualize/VisualizeResult/ATTUNet',
             'AAU-net': './visualize/VisualizeResult/AAU-net',
-            'Swin-UNet': './visualize/VisualizeResult/SwinUNet',
+            'SwinUNet': './visualize/VisualizeResult/SwinUNet',
+            'TransUNet': './visualize/VisualizeResult/TransUNet',
             'HiFormer-L': './visualize/VisualizeResult/HiFormer-L',
             'H2Former': './visualize/VisualizeResult/H2Former',
             'BEFUNet': './visualize/VisualizeResult/BEFUNet',
             'U-Mamba': './visualize/VisualizeResult/UMamba',
             'Swin-UMamba': './visualize/VisualizeResult/SwinUMamba',
+            'VM-UNet-V2': './visualize/VisualizeResult/VMUNetv2',
             'Ours': './visualize/VisualizeResult/Ours'
         }
         # --------------------------对比实验结果可视化--------------------------
@@ -395,13 +400,16 @@ if __name__ == '__main__':
         pred_dirs = {
             'UNet': './visualize/Transfer-Visualize/UNet',
             'UNet++': './visualize/Transfer-Visualize/UNet++',
+            'Attention UNet': './visualize/Transfer-Visualize/ATTUNet',
             'AAU-net': './visualize/Transfer-Visualize/AAU-net',
-            'Swin-UNet': './visualize/Transfer-Visualize/SwinUNet',
+            'SwinUNet': './visualize/Transfer-Visualize/SwinUNet',
+            'TransUNet': './visualize/Transfer-Visualize/TransUNet',
             'HiFormer-L': './visualize/Transfer-Visualize/HiFormer-L',
             'H2Former': './visualize/Transfer-Visualize/H2Former',
             'BEFUNet': './visualize/Transfer-Visualize/BEFUNet',
             'U-Mamba': './visualize/Transfer-Visualize/UMamba',
             'Swin-UMamba': './visualize/Transfer-Visualize/SwinUMamba',
+            'VM-UNet-V2': './visualize/Transfer-Visualize/VMUNetv2',
             'Ours': './visualize/Transfer-Visualize/Ours'
         }
         # --------------------------域转移实验结果可视化--------------------------

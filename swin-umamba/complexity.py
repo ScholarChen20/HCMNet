@@ -71,7 +71,7 @@ def plot_complexity():
             ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y + 0.65),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'UNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x - 0.5, y - 1.1),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.55),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'H2Former':
             ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.55),
@@ -80,22 +80,22 @@ def plot_complexity():
             ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.54),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'SwinUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x, y - 0.80),
+            ax.annotate(model_name, xy=(x, y), xytext=(x, y + 0.85),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'TransUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 8, y - 1),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 8, y + 1.1),
                        fontsize=10, ha='left', va='bottom')
-        elif model_name == 'AAUNet':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.8),
+        elif model_name == 'AAU-net':
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 3, y - 1.2),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'Attention U-Net':
-            ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y - 0.65),
+            ax.annotate(model_name, xy=(x, y), xytext=(x + 3, y - 1.2),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'ResUNet':
             ax.annotate(model_name, xy=(x, y), xytext=(x + 6, y + 0.55),
                        fontsize=10, ha='left', va='bottom')
         elif model_name == 'UMamba':
-            ax.annotate(model_name, xy=(x, y), xytext=(x - 8, y + 0.45),
+            ax.annotate(model_name, xy=(x, y), xytext=(x - 8, y + 0.55),
                        fontsize=10, ha='right', va='bottom')
         else:
             ax.annotate(model_name, xy=(x, y), xytext=(x + 5, y + 0.55),
@@ -115,7 +115,7 @@ def plot_complexity():
 
     # 刻度设置
     ax.set_xticks(range(10, 310, 50))
-    ax.set_yticks(range(76, 86, 2))
+    ax.set_yticks(range(76, 88, 2))
     ax.tick_params(axis='both', labelsize=10)
 
     # 添加网格（虚线）
@@ -125,7 +125,7 @@ def plot_complexity():
     plt.tight_layout()
 
     # 保存图像
-    plt.savefig('./visualize/fps_vs_dice/fps_vs_dice_clean.png', dpi=300, bbox_inches='tight')
+    plt.savefig('./visualize/fps_vs_dice/fps_vs_dice_clean.png', dpi=1000, bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':

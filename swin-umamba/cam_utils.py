@@ -152,40 +152,42 @@ def main(file_name, type):
     os.makedirs(save_path, exist_ok=True)  # 创建保存热力图的文件夹,路径为./hotmap/file_name
 
     # 3. Hook res_out[2]
-    # target_layer = model.cnnnet.stages[3]
-    # cam = FeatureCAM(model, target_layer)
-    # heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
-    # heatmap_resized = cv2.resize(heatmap, (256, 256))
-    # overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
+    target_layer = model.cnnnet.stages[3]
+    cam = FeatureCAM(model, target_layer)
+    heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
+    heatmap_resized = cv2.resize(heatmap, (256, 256))
+    overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
 
-    heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type="cnn")
-    heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
+    # heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type="cnn")
+    # heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
+    # overlay = create_overlay(img, heatmap_resized)
 
-    overlay = create_overlay(img, heatmap_resized)
-
-    # overlay = create_unified_blue_overlay(img, heatmap_resized)
     cv2.imwrite(os.path.join(save_path, "feature_map_cnn.png"), overlay)
     print("Saved heatmap to", save_path + "/feature_map_cnn.png")
 
-    # target_layer = model.Fuse[2]
-    # cam = FeatureCAM(model, target_layer)
-    # heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
-    # heatmap_resized = cv2.resize(heatmap, (256, 256))
-    # overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
-    # overlay = create_unified_blue_overlay(img, heatmap_resized)
+    target_layer = model.Fuse[3]
+    cam = FeatureCAM(model, target_layer)
+    heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
+    heatmap_resized = cv2.resize(heatmap, (256, 256))
+    overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
 
-    heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type="fuse")
-    heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
-
-    overlay = create_overlay(img, heatmap_resized)
+    # heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type="fuse")
+    # heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
+    #
     cv2.imwrite(os.path.join(save_path, "feature_map_fuse.png"), overlay)
     print("Saved heatmap to", save_path + "/feature_map_fuse.png")
 
 
-    heatmap_tensor = spatial_attention_heatmap(model, img_t, target_layer_idx=3, type = "mamba")
-    heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
+    # target_layer = model.vmunet.layers[3]
+    # cam = FeatureCAM(model, target_layer)
+    # heatmap, cam_raw = cam.generate_cam(img_t, target_index=0)  # 在generate_cam内部会进行前向和反向传播
+    # heatmap_resized = cv2.resize(heatmap, (256, 256))
+    # overlay = cv2.addWeighted(img, 0.7, heatmap_resized, 0.3, 0)
 
+    heatmap_tensor = gradient_based_heatmap(model, img_t, target_layer_idx=3)
+    heatmap_resized = process_heatmap_for_visualization(heatmap_tensor, (256, 256))
     overlay = create_overlay(img, heatmap_resized)
+
     cv2.imwrite(os.path.join(save_path, "feature_map_mamba.png"), overlay)
     print("Saved heatmap to", save_path + "/feature_map_mamba.png")
 
@@ -193,14 +195,7 @@ def main(file_name, type):
 def spatial_attention_heatmap(model, x, target_layer_idx=3, type = "cnn"):
     """基于空间注意力的热力图"""
     # features = model.vssm_encoder(x)[target_layer_idx]  # [1, 192, 32, 32]
-    if type == "cnn":
-        features = model.cnnnet(x)[1][target_layer_idx]  # [1, 192, 32, 32]
-    elif type == "fuse":
-        features_cnn = model.cnnnet(x)[1][target_layer_idx]
-        features_mamba = model.vmunet(x)[target_layer_idx + 1]
-        features = model.Fuse[target_layer_idx](features_cnn, features_mamba)
-    elif type == "mamba":
-        features = model.vmunet(x)[target_layer_idx + 1]  # [1, 192, 32, 32]
+    features = model.vmunet(x)[target_layer_idx + 1]  # [1, 192, 32, 32]
     # features = model.vmunet(x)[target_layer_idx]  # [1, 192, 32, 32]
 
     # 计算空间注意力（每个位置在所有通道上的响应）
@@ -240,7 +235,7 @@ def gradient_based_heatmap(model, x, target_layer_idx=3):
     model.train()
     x.requires_grad_(True)
 
-    features = model.vssm_encoder(x)[target_layer_idx]
+    features = model.vmunet(x)[target_layer_idx + 1]
 
     # 选择激活最强的通道
     channel_activations = features.mean(dim=[2, 3])  # [1, 192]
@@ -372,6 +367,6 @@ if __name__ == '__main__':
     # for file_name in dataset_name :
     #     main(file_name, "fuse")
 
-    # main("benign (300).png", "fuse")
+    main("benign (13).png", "fuse")
 
-    plot_heatmap()
+    # plot_heatmap()

@@ -20,9 +20,9 @@ def parse_args():
     parser.add_argument('--batch_size', default = 8, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
                         default = 256, help='input patch size of network input')
-    parser.add_argument('--model', default="BCMamba", help='training model')
+    parser.add_argument('--model', default="MedMamba", help='training model')
     parser.add_argument('--output', default="./output", help='output dir')
-    parser.add_argument('--iteration', default="2", help='the number of training model')
+    parser.add_argument('--iteration', default="1", help='the number of training model')
     parser.add_argument('--Ablation', default="Ablation", help='Ablation root dir')
     parser.add_argument('--ablaType', default="fuse", help='todo ablation module name')
     parser.add_argument('--deep_supervision', default= True, type=bool, help='deepSupervisor training method')
@@ -30,7 +30,7 @@ def parse_args():
                         default='AdamW', help='choosing optimizer AdamW or SGD')
     parser.add_argument('--augmentation',
                         default=False, help='choose to do random flip rotation')
-    parser.add_argument('--seed', type=int, default = 3, help='random seed')
+    parser.add_argument('--seed', type=int, default = 200, help='random seed')
     parser.add_argument('--n_skip', type=int, default= 3, help='using number of skip-connect, default is num')
     parser.add_argument('--rank', type=int, default = 4, help='lora rank')
     parser.add_argument('--log_dir', type=str, default='./log_dir', help='every training epoch of metric and loss')

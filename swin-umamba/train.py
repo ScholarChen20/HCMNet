@@ -154,7 +154,7 @@ def main():
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    # set_random_seed(config['seed'])
+    set_random_seed(config['seed'])
     if config['seed'] >= 0:
         logging.info("Setting fixed seed: {}".format(config['seed']))
         # set_random_seed(config['seed'])

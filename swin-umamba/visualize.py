@@ -367,7 +367,7 @@ if __name__ == '__main__':
                'U-Mamba', 'Swin-UMamba','VM-UNet-V2', 'Ours']  # 对比方法
     ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'BC-Mamba']
 
-    type = "Transfer"
+    type = "Comparison"
 
     if type == "Comparison":
         # 对比实验图像路径
@@ -390,10 +390,10 @@ if __name__ == '__main__':
         }
         # --------------------------对比实验结果可视化--------------------------
         input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)
-        methods = list(pred_dirs.keys())
-        simple_visualize_comparison(input_images, gt_images, pred_images, methods)
-        # 加载图像路径
-        # plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
+        # methods = list(pred_dirs.keys())
+        # simple_visualize_comparison(input_images, gt_images, pred_images, methods)
+
+        plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
     elif type == "Transfer":
         input_dir = './visualize/Transfer-Visualize/images'
         gt_dir = './visualize/Transfer-Visualize/masks'

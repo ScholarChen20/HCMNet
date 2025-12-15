@@ -13,14 +13,15 @@ from .BCMamba import get_sm_model,get_med_model
 from .model.UNet import UNet
 from .vision_transformer import Swin_model
 from .TransUNet.vit_seg_model import vit_seg_transformer
+from .CCViMUNet import LCVMUNet
 import torch
 import torch.nn as nn
 from einops import rearrange
 
 
 def net(model_name, rank, deepSupervisor):
-    if model_name == 'VMUNet':
-        model = load_vm_model()
+    if model_name == 'CCViMUNet':
+        model = LCVMUNet(load_ckpt_path="./pretrained_ckpt/local_vssm_small.ckpt").cuda()
     elif model_name == 'VMUNetv2':
         model = load_vm2_model()
     elif model_name == 'SwinUMamba':

@@ -15,7 +15,7 @@ def parse_args():
                         help='model root path')
     parser.add_argument('--lr', default=0.001, type=float, metavar='N',
                         help='learning rate')   # 默认学习率为0.001
-    parser.add_argument('--epochs', default= 100, type=int, metavar='N',
+    parser.add_argument('--epochs', default= 150, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--batch_size', default = 8, type=int, metavar='N',help='mini-batch size')
     parser.add_argument('--img_size', type=int,
@@ -24,15 +24,15 @@ def parse_args():
     parser.add_argument('--output', default="./output", help='output dir')
     parser.add_argument('--iteration', default="1", help='the number of training model')
     parser.add_argument('--Ablation', default="Ablation", help='Ablation root dir')
-    parser.add_argument('--ablaType', default="fuse", help='todo ablation module name')
+    parser.add_argument('--ablaType', default="rank16", help='todo ablation module name')
     parser.add_argument('--deep_supervision', default= True, type=bool, help='deepSupervisor training method')
     parser.add_argument('--optimizer', type=str,
                         default='AdamW', help='choosing optimizer AdamW or SGD')
     parser.add_argument('--augmentation',
                         default=False, help='choose to do random flip rotation')
-    parser.add_argument('--seed', type=int, default = 200, help='random seed')
+    parser.add_argument('--seed', type=int, default = 42, help='random seed')
     parser.add_argument('--n_skip', type=int, default= 3, help='using number of skip-connect, default is num')
-    parser.add_argument('--rank', type=int, default = 4, help='lora rank')
+    parser.add_argument('--rank', type=int, default = 16, help='lora rank')
     parser.add_argument('--log_dir', type=str, default='./log_dir', help='every training epoch of metric and loss')
     args = parser.parse_args()
 

@@ -53,7 +53,7 @@ def main(config):
 
     #掩码pred-生成路径
     mask_pred = os.path.join(config['output'], config['model'], config['Ablation'], config['dataset'])
-    file_dir = os.path.join(mask_pred, config['ablaType'] + config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, config['ablaType'] + "_" + config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

@@ -40,12 +40,12 @@ def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimi
         out1, out2, out3, out4 = model(image)
         mask = torch.unsqueeze(mask, dim=1)
         '''HybridLoss'''
-        # loss1 = criterion(out1, mask, current_step)
-        # loss2 = criterion(out2, mask, current_step)
-        # loss3 = criterion(out3, mask, current_step)
-        # loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
+        loss1 = criterion(out1, mask, current_step)
+        loss2 = criterion(out2, mask, current_step)
+        loss3 = criterion(out3, mask, current_step)
+        loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
         '''BCEDiceLoss'''
-        loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
+        # loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
         avg_meters['train_loss'].update(loss.item(), image.size(0))
         optimizer.zero_grad()
         accelerator.backward(loss)
@@ -82,7 +82,7 @@ def main():
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
 
-    criterion = BCEDiceLoss()  #  HybridLossWithDynamicBoundary
+    criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     # model, optimizer, train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
     scheduler = get_scheduler(optimizer=optimizer)
@@ -154,10 +154,9 @@ def main():
 
 if __name__ == '__main__':
     config = vars(parse_args())
-    set_random_seed(config['seed'])
     if config['seed'] >= 0:
         logging.info("Setting fixed seed: {}".format(config['seed']))
-        # set_random_seed(config['seed'])
+        set_random_seed(config['seed'])
     os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)  # 创建模型输出文件夹
     os.makedirs(os.path.join(config['output'],config['model'], config['Ablation'],config['dataset']),exist_ok=True) # 消融实验输出文件夹
     os.makedirs(os.path.join(config['log_dir'],config['dataset']), exist_ok=True) # 创建日志文件夹

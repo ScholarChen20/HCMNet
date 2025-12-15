@@ -9,22 +9,19 @@ from torch import Tensor
 from einops import rearrange, repeat
 import logging
 
-
 try:
     from mamba_ssm.ops.selective_scan_interface import mamba_inner_fn_no_out_proj
 except ImportError:
     mamba_inner_fn_no_out_proj = None
 
-from .local_scan import LocalScanTriton, LocalReverseTriton, local_scan, local_scan_bchw, local_reverse
-
 
 class MultiScan(nn.Module):
+    ALL_CHOICES = ('h', 'h_flip', 'v', 'v_flip', 'c2', 'c5')
 
-    ALL_CHOICES = ('h', 'h_flip', 'v', 'v_flip', 'w2', 'w2_flip', 'w7', 'w7_flip')
-
-    def __init__(self, dim, choices=None, token_size=(14, 14)):
+    def __init__(self, dim, choices=None, token_size=(14, 14),win_size=8):
         super().__init__()
         self.token_size = token_size
+        self.win_size = win_size
         if choices is None:
             self.choices = MultiScan.ALL_CHOICES
             self.norms = nn.ModuleList([nn.LayerNorm(dim, elementwise_affine=False) for _ in self.choices])
@@ -35,6 +32,10 @@ class MultiScan(nn.Module):
         else:
             self.choices = choices
             self.search = False
+        numbers = [item[1:] for item in self.choices if item.startswith('c') and item[1:].isdigit()]
+        if numbers:
+            number = int(numbers[0])
+            self.local_cluster = LocalCluster(dim=dim, w_size=self.win_size, clusters=number)
 
     def forward(self, xs):
         """
@@ -83,11 +84,11 @@ class MultiScan(nn.Module):
                 return rearrange(x, 'b (h w) d -> b d (w h)', h=H, w=W)
             elif direction == 'v_flip':
                 return rearrange(x, 'b (h w) d -> b d (w h)', h=H, w=W).flip([-1])
-            elif direction.startswith('w'):
-                K = int(direction[1:].split('_')[0])
-                flip = direction.endswith('flip')
-                return local_scan(x, K, H, W, flip=flip)
+            elif direction.startswith('c'):
+                # K = int(direction[1:].split('_')[0])
+                # flip = direction.endswith('flip')
                 # return LocalScanTriton.apply(x.transpose(-2, -1), K, flip, H, W)
+                return self.local_cluster(x)
             else:
                 raise RuntimeError(f'Direction {direction} not found.')
         elif len(x.shape) == 4:
@@ -99,11 +100,11 @@ class MultiScan(nn.Module):
                 return rearrange(x, 'b d h w -> b d (w h)', h=H, w=W)
             elif direction == 'v_flip':
                 return rearrange(x, 'b d h w -> b d (w h)', h=H, w=W).flip([-1])
-            elif direction.startswith('w'):
-                K = int(direction[1:].split('_')[0])
-                flip = direction.endswith('flip')
-                return local_scan_bchw(x, K, H, W, flip=flip)
+            elif direction.startswith('c'):
+                # K = int(direction[1:].split('_')[0])
+                # flip = direction.endswith('flip')
                 # return LocalScanTriton.apply(x, K, flip, H, W).flatten(2)
+                return self.local_cluster(x)
             else:
                 raise RuntimeError(f'Direction {direction} not found.')
 
@@ -121,14 +122,11 @@ class MultiScan(nn.Module):
             return rearrange(x, 'b d (h w) -> b d (w h)', h=H, w=W)
         elif direction == 'v_flip':
             return rearrange(x.flip([-1]), 'b d (h w) -> b d (w h)', h=H, w=W)
-        elif direction.startswith('w'):
-            K = int(direction[1:].split('_')[0])
-            flip = direction.endswith('flip')
-            return local_reverse(x, K, H, W, flip=flip)
-            # return LocalReverseTriton.apply(x, K, flip, H, W)
+        elif direction.startswith('c'):
+            return x
         else:
-            raise RuntimeError(f'Direction {direction} not found.')    
-        
+            raise RuntimeError(f'Direction {direction} not found.')
+
     def __repr__(self):
         scans = ', '.join(self.choices)
         return super().__repr__().replace(self.__class__.__name__, f'{self.__class__.__name__}[{scans}]')
@@ -155,36 +153,33 @@ class BiAttn(nn.Module):
 
         c_attn = self.channel_select(x_global)
         c_attn = self.gate_fn(c_attn)  # [B, 1, C]
-        # s_attn = self.spatial_select(torch.cat([x_local, x_global.expand(-1, x.shape[1], -1)], dim=-1))
-        # s_attn = self.gate_fn(s_attn)  # [B, N, 1]
 
-        attn = c_attn #* s_attn  # [B, N, C]
+        attn = c_attn  # * s_attn  # [B, N, C]
         return ori_x * attn
 
 
 class MultiMamba(nn.Module):
     def __init__(
-        self,
-        d_model,
-        d_state=16,
-        d_conv=4,
-        expand=2,
-        dt_rank="auto",
-        dt_min=0.001,
-        dt_max=0.1,
-        dt_init="random",
-        dt_scale=1.0,
-        dt_init_floor=1e-4,
-        conv_bias=True,
-        bias=False,
-        use_fast_path=True,  # Fused kernel options
-        layer_idx=None,
-        device=None,
-        dtype=None,
-        bimamba_type="none",
-        directions=None,
-        token_size=(14, 14),
-        use_middle_cls_token=False,
+            self,
+            d_model,
+            d_state=16,
+            d_conv=4,
+            expand=2,
+            dt_rank="auto",
+            dt_min=0.001,
+            dt_max=0.1,
+            dt_init="random",
+            dt_scale=1.0,
+            dt_init_floor=1e-4,
+            conv_bias=True,
+            bias=False,
+            use_fast_path=True,  # Fused kernel options
+            layer_idx=None,
+            device=None,
+            dtype=None,
+            bimamba_type="none",
+            directions=None,
+            token_size=(14, 14),
     ):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -198,13 +193,11 @@ class MultiMamba(nn.Module):
         self.layer_idx = layer_idx
         self.bimamba_type = bimamba_type
         self.token_size = token_size
-        self.use_middle_cls_token = use_middle_cls_token
 
         self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)
 
         self.activation = "silu"
         self.act = nn.SiLU()
-
 
         self.multi_scan = MultiScan(self.d_inner, choices=directions, token_size=token_size)
         '''new for search'''
@@ -237,7 +230,7 @@ class MultiMamba(nn.Module):
             dt_proj = nn.Linear(self.dt_rank, self.d_inner, bias=True, **factory_kwargs)
 
             # Initialize special dt projection to preserve variance at initialization
-            dt_init_std = self.dt_rank**-0.5 * dt_scale
+            dt_init_std = self.dt_rank ** -0.5 * dt_scale
             if dt_init == "constant":
                 nn.init.constant_(dt_proj.weight, dt_init_std)
             elif dt_init == "random":
@@ -274,26 +267,7 @@ class MultiMamba(nn.Module):
         """
         xz = self.in_proj(hidden_states)
 
-        if self.use_middle_cls_token:
-            """
-            Steps to use middle cls token
-            # 1. split cls token out
-            # 2. do 2d scan
-            # 3. append cls token to the middle
-            # 4. ssm
-            # 5. split cls token out
-            # 6. reverse tokens
-            # 7. append cls token to the middle
-            """
-            cls_position = (xz.shape[1] - 1) // 2
-            cls_token = xz[:, cls_position:cls_position+1]
-            xz = torch.cat([xz[:, :cls_position], xz[:, cls_position+1:]], dim=1)
-
         xs = self.multi_scan.multi_scan(xz)  # [[BDL], [BDL], ...]
-        if self.use_middle_cls_token:
-            # step 3
-            xs = [torch.cat([x[:, :, :cls_position], cls_token.transpose(-2, -1), x[:, :, cls_position:]], dim=2) for x in xs]
-
         outs = []
         for i, xz in enumerate(xs):
             # xz = rearrange(xz, "b l d -> b d l")
@@ -302,7 +276,7 @@ class MultiMamba(nn.Module):
             x_proj = getattr(self, f'x_proj_{i}')
             dt_proj = getattr(self, f'dt_proj_{i}')
             D = getattr(self, f'D_{i}')
-            
+
             out = mamba_inner_fn_no_out_proj(
                 xz,
                 conv1d.weight,
@@ -318,24 +292,7 @@ class MultiMamba(nn.Module):
             )
             outs.append(out)
 
-        if self.use_middle_cls_token:
-            # step 5
-            new_outs = []
-            cls_tokens = []
-            for out in outs:
-                cls_tokens.append(out[:, :, cls_position:cls_position+1])
-                new_outs.append(torch.cat([out[:, :, :cls_position], out[:, :, cls_position+1:]], dim=2))
-            outs = new_outs
-
         outs = self.multi_scan.multi_reverse(outs)
-
-        if self.use_middle_cls_token:
-            # step 7
-            new_outs = []
-            for out, cls_token in zip(outs, cls_tokens):
-                new_outs.append(torch.cat([out[:, :, :cls_position], cls_token, out[:, :, cls_position:]], dim=2))
-            outs = new_outs
-
         outs = [self.attn(rearrange(out, 'b d l -> b l d')) for out in outs]
         out = self.multi_scan(outs)
         out = F.linear(out, self.out_proj.weight, self.out_proj.bias)
@@ -348,6 +305,7 @@ try:
 except:
     selective_scan_cuda_oflex = None
 
+
 class SelectiveScanOflex(torch.autograd.Function):
     @staticmethod
     @torch.cuda.amp.custom_fwd
@@ -356,7 +314,7 @@ class SelectiveScanOflex(torch.autograd.Function):
         out, x, *rest = selective_scan_cuda_oflex.fwd(u, delta, A, B, C, D, delta_bias, delta_softplus, 1, oflex)
         ctx.save_for_backward(u, delta, A, B, C, D, delta_bias, x)
         return out
-    
+
     @staticmethod
     @torch.cuda.amp.custom_bwd
     def backward(ctx, dout, *args):
@@ -371,26 +329,26 @@ class SelectiveScanOflex(torch.autograd.Function):
 
 class MultiVMamba(nn.Module):
     def __init__(
-        self,
-        d_model,
-        d_state=16,
-        d_conv=4,
-        expand=2,
-        dt_rank="auto",
-        dt_min=0.001,
-        dt_max=0.1,
-        dt_init="random",
-        dt_scale=1.0,
-        dt_init_floor=1e-4,
-        conv_bias=True,
-        bias=False,
-        use_fast_path=True,  # Fused kernel options
-        layer_idx=None,
-        device=None,
-        dtype=None,
-        bimamba_type="none",
-        directions=None,
-        token_size=(14, 14),
+            self,
+            d_model,
+            d_state=16,
+            d_conv=4,
+            expand=2,
+            dt_rank="auto",
+            dt_min=0.001,
+            dt_max=0.1,
+            dt_init="random",
+            dt_scale=1.0,
+            dt_init_floor=1e-4,
+            conv_bias=True,
+            bias=False,
+            use_fast_path=True,  # Fused kernel options
+            layer_idx=None,
+            device=None,
+            dtype=None,
+            bimamba_type="none",
+            directions=None,
+            token_size=(14, 14),
     ):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
@@ -409,7 +367,6 @@ class MultiVMamba(nn.Module):
 
         self.activation = "silu"
         self.act = nn.SiLU()
-
 
         self.multi_scan = MultiScan(self.d_inner, choices=directions, token_size=token_size)
         '''new for search'''
@@ -442,7 +399,7 @@ class MultiVMamba(nn.Module):
             dt_proj = nn.Linear(self.dt_rank, self.d_inner, bias=True, **factory_kwargs)
 
             # Initialize special dt projection to preserve variance at initialization
-            dt_init_std = self.dt_rank**-0.5 * dt_scale
+            dt_init_std = self.dt_rank ** -0.5 * dt_scale
             if dt_init == "constant":
                 nn.init.constant_(dt_proj.weight, dt_init_std)
             elif dt_init == "random":
@@ -508,7 +465,8 @@ class MultiVMamba(nn.Module):
             D = D.float()
             delta_bias = dt_proj.bias.float()
 
-            out = SelectiveScanOflex.apply(xz.contiguous(), dts.contiguous(), A.contiguous(), B.contiguous(), C.contiguous(), D.contiguous(), delta_bias, True, True)
+            out = SelectiveScanOflex.apply(xz.contiguous(), dts.contiguous(), A.contiguous(), B.contiguous(),
+                                           C.contiguous(), D.contiguous(), delta_bias, True, True)
 
             outs.append(rearrange(out, "b d l -> b l d"))
 
@@ -519,4 +477,153 @@ class MultiVMamba(nn.Module):
         out = self.out_proj(out)
 
         return out
+
+
+def pairwise_cos_sim(x1: torch.Tensor, x2: torch.Tensor):
+    """
+    return pair-wise similarity matrix between two tensors
+    :param x1: [B,...,M,D]
+    :param x2: [B,...,N,D]
+    :return: similarity matrix [B,...,M,N]
+    """
+    x1 = F.normalize(x1, dim=-1)
+    x2 = F.normalize(x2, dim=-1)
+
+    sim = torch.matmul(x1, x2.transpose(-2, -1))
+    return sim
+
+
+class LocalCluster(nn.Module):
+    def __init__(self, dim, w_size=7, clusters=7):
+        super().__init__()
+        self.dim = dim
+        self.w_size = w_size
+        self.clusters = clusters
+        self.centers_proposal = nn.AdaptiveAvgPool2d((self.clusters, self.clusters))
+
+        self.sim_alpha = nn.Parameter(torch.ones(1))
+        self.sim_beta = nn.Parameter(torch.zeros(1))
+
+        self.f = nn.Conv2d(self.dim // 2, self.dim // 16, kernel_size=1)
+        self.v = nn.Conv2d(self.dim // 2, self.dim // 16, kernel_size=1)
+        self.p = nn.Conv2d(self.dim // 16, self.dim, kernel_size=1)
+
+    def cluster(self, f, v, Wg, Hg):
+        bb, cc, ww, hh = f.shape
+        centers = self.centers_proposal(f)
+        value_centers = rearrange(self.centers_proposal(v), 'b c w h -> b (w h) c')  # [b,C_W,C_H,c] [32768,4,24]
+
+        sim = torch.sigmoid(
+            self.sim_beta +
+            self.sim_alpha * pairwise_cos_sim(
+                centers.reshape(bb, cc, -1).permute(0, 2, 1),  # [32768,24,2,2]---[32768,4,24] 4是中心点，24是特征
+                f.reshape(bb, cc, -1).permute(0, 2, 1)  # [32768,24,7,7]---[32768,49,24]  49是块中的所有点，24是特征
+            )
+        )
+        sim_max, sim_max_idx = sim.max(dim=1, keepdim=True)
+        mask = torch.zeros_like(sim)
+        mask.scatter_(1, sim_max_idx, 1.)
+        sim = sim * mask
+        v2 = rearrange(v, 'b c w h -> b (w h) c')
+        out = ((v2.unsqueeze(dim=1) * sim.unsqueeze(dim=-1)).sum(dim=2) + value_centers) / (
+                sim.sum(dim=-1, keepdim=True) + 1.0)
+
+        # dispatch step, return to each point in a cluster
+        out = (out.unsqueeze(dim=2) * sim.unsqueeze(dim=-1)).sum(dim=1)  # [B,N,D] [32768,49,24]
+        out = rearrange(out, "b (w h) c -> b c w h", w=ww)  # [32768,24,7,7]
+        out = rearrange(out, "(b Wg Hg) e w h-> b e (Wg w) (Hg h)", Wg=Wg, Hg=Hg)
+
+        return out
+
+    def forward(self, x_in):
+        x = rearrange(x_in, "b e (Wg w) (Hg h)-> (b Wg Hg) e w h", Wg=self.w_size, Hg=self.w_size)
+
+        x1, x2 = x.chunk(2, dim=1)
+        f = self.f(x1)
+        v = self.v(x2)
+        out = self.cluster(f, v, self.w_size, self.w_size)
+        out = self.p(out)
+
+        out = out.flatten(2)
+
+        return out
+
+
+# class LocalCluster(nn.Module):
+#     def __init__(self, dim, w_size=7, clusters=5):
+#         super().__init__()
+#         self.dim = dim
+#         self.w_size = w_size
+#         self.clusters = clusters
+#         self.centers_proposal = nn.AdaptiveAvgPool2d((self.clusters, self.clusters))
+#
+#         self.sim_alpha = nn.Parameter(torch.ones(1))
+#         self.sim_beta = nn.Parameter(torch.zeros(1))
+#
+#         self.f = nn.Conv2d(self.dim // 2, self.dim // 8, kernel_size=1)
+#         self.v = nn.Conv2d(self.dim // 2, self.dim // 8, kernel_size=1)
+#         self.p = nn.Conv2d(self.dim // 8, self.dim, kernel_size=1)
+#
+#     def cluster(self, f, v, Wg, Hg):
+#         bb, cc, ww, hh = f.shape
+#         centers = self.centers_proposal(f)
+#         value_centers = rearrange(self.centers_proposal(v), 'b c w h -> b (w h) c')  # [b,C_W,C_H,c] [32768,4,24]
+#
+#         sim = torch.sigmoid(
+#             self.sim_beta +
+#             self.sim_alpha * pairwise_cos_sim(
+#                 centers.reshape(bb, cc, -1).permute(0, 2, 1),  # [32768,24,2,2]---[32768,4,24] 4是中心点，24是特征
+#                 f.reshape(bb, cc, -1).permute(0, 2, 1)  # [32768,24,7,7]---[32768,49,24]  49是块中的所有点，24是特征
+#             )
+#         )
+#         sim_max, sim_max_idx = sim.max(dim=1, keepdim=True)
+#         mask = torch.zeros_like(sim)
+#         mask.scatter_(1, sim_max_idx, 1.)
+#         sim = sim * mask
+#         v2 = rearrange(v, 'b c w h -> b (w h) c')
+#         out = ((v2.unsqueeze(dim=1) * sim.unsqueeze(dim=-1)).sum(dim=2) + value_centers) / (
+#                 sim.sum(dim=-1, keepdim=True) + 1.0)
+#
+#         # dispatch step, return to each point in a cluster
+#         out = (out.unsqueeze(dim=2) * sim.unsqueeze(dim=-1)).sum(dim=1)  # [B,N,D] [32768,49,24]
+#         out = rearrange(out, "b (w h) c -> b c w h", w=ww)  # [32768,24,7,7]
+#         out = rearrange(out, "(b Wg Hg) e w h-> b e (Wg w) (Hg h)", Wg=Wg, Hg=Hg)
+#
+#         return out
+#
+#     def forward(self, x_in):
+#         x = rearrange(x_in, "b e (Wg w) (Hg h)-> (b Wg Hg) e w h", Wg=self.w_size, Hg=self.w_size)
+#
+#         x1, x2 = x.chunk(2, dim=1)
+#         f = self.f(x1)
+#         v = self.v(x2)
+#         out = self.cluster(f, v, self.w_size, self.w_size)
+#         out = self.p(out)
+#
+#         out = out.flatten(2)
+#
+#         return out
+
+
+
+
+def fea_num_reverse(x, H, W):
+    K = 7
+    if len(x.shape) == 4:
+        B, C, H, W = x.shape
+    elif len(x.shape) == 3:
+        B, C, _ = x.shape
+        assert H is not None and W is not None, "x must be BCHW format to infer the H W"
+    else:
+        raise RuntimeError(f"Unsupported shape of x: {x.shape}")
+    B, C, H, W = int(B), int(C), int(H), int(W)
+
+    Hg, Wg = math.ceil(H / K), math.ceil(W / K)
+    Hb, Wb = Hg * K, Wg * K
+
+    x = rearrange(x,"b c (w h ) -> b c w h", w=Wb, h=Hb)
+    x = x[:,:,:W,:H]
+    x = x.flatten(2)
+
+    return x
 

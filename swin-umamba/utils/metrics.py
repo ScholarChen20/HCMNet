@@ -54,7 +54,7 @@ def iou_score(output, target):
     output[output > 0] = 1
     target[target > 0] = 1
     if output.sum() > 0 and target.sum()>0:
-        hd95 = metric.binary.hd95(output_, target_)
+        HD95 = metric.binary.hd95(output_, target_)
 
     intersection = (output_ & target_).sum()
     union = (output_ | target_).sum()
@@ -68,7 +68,7 @@ def iou_score(output, target):
     SP = get_specificity(output_, target_, threshold=0.5)
     ACC = get_accuracy(output_, target_, threshold=0.5)
     # F1 = 2 * SE * PC / (SE + PC + 1e-6)
-    return iou, dice, SE, PC, SP, ACC
+    return iou, dice, SE, PC, SP, ACC, HD95
 
 
 def dice_coef(output, target):

@@ -16,11 +16,12 @@ def load_images(input_dir, gt_dir, pred_dirs):
     return input_images, gt_images, pred_images
 
 
-def ablation_segmentation_results(input_images, gt_images, pred_images, methods):
+def ablation_segmentation_results(input_images, gt_images, pred_images, methods, save_path=None):
     num_samples = len(input_images)  # 8
     num_methods = len(methods)   # 10
-    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(10, num_samples * 1.5))
-    plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.05, right=0.95)
+    fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(9, num_samples * 1.45))
+    plt.subplots_adjust(wspace=0.007, hspace=0, left=0.007, right=0.995, bottom=0.021, top=0.949)
+
 
     for i in range(num_samples):
         # ======= 修复第一列：超声原图+真实边界 =======
@@ -44,7 +45,7 @@ def ablation_segmentation_results(input_images, gt_images, pred_images, methods)
 
         axes[i, 0].imshow(blended)
         if i == 0:
-            axes[i, 0].set_title("Input with GT", fontsize=12)
+            axes[i, 0].set_title("(a)", fontsize=12)
         axes[i, 0].axis('off')
         # ======= 预测结果列 =======
         for col_idx, method in enumerate(methods, start=1):
@@ -102,6 +103,8 @@ def ablation_segmentation_results(input_images, gt_images, pred_images, methods)
 
     plt.tight_layout(pad=1.0)
     plt.show()
+    if save_path:
+        plt.savefig(save_path, dpi=1000, bbox_inches='tight')
 
 
 
@@ -365,28 +368,28 @@ if __name__ == '__main__':
     methods = ['UNet', 'UNet++', 'Attention UNet', 'AAU-net',
                'SwinUNet', 'TransUNet', 'HiFormer-L', 'H2Former', 'BEFUNet',
                'U-Mamba', 'Swin-UMamba','VM-UNet-V2', 'Ours']  # 对比方法
-    ablation_methods = ['baseline', 'w/o CNN', 'w/o TiFusion', 'w/o MWFFD', 'w/o Loss', 'BC-Mamba']
+    ablation_methods = ['(b)','(c)', '(d)', '(e)', '(f)']
 
     type = "Comparison"
 
     if type == "Comparison":
         # 对比实验图像路径
-        input_dir = './visualize/VisualizeResult/images'
-        gt_dir = './visualize/VisualizeResult/masks'
+        input_dir = './visualize/Comparasion/images'
+        gt_dir = './visualize/Comparasion/masks'
         pred_dirs = {
-            'UNet': './visualize/VisualizeResult/UNet',
-            'UNet++': './visualize/VisualizeResult/UNet++',
-            'Attention UNet': './visualize/VisualizeResult/ATTUNet',
-            'AAU-net': './visualize/VisualizeResult/AAU-net',
-            'SwinUNet': './visualize/VisualizeResult/SwinUNet',
-            'TransUNet': './visualize/VisualizeResult/TransUNet',
-            'HiFormer-L': './visualize/VisualizeResult/HiFormer-L',
-            'H2Former': './visualize/VisualizeResult/H2Former',
-            'BEFUNet': './visualize/VisualizeResult/BEFUNet',
-            'U-Mamba': './visualize/VisualizeResult/UMamba',
-            'Swin-UMamba': './visualize/VisualizeResult/SwinUMamba',
-            'VM-UNet-V2': './visualize/VisualizeResult/VMUNetv2',
-            'Ours': './visualize/VisualizeResult/Ours'
+            'UNet': './visualize/Comparasion/UNet',
+            'UNet++': './visualize/Comparasion/UNet++',
+            'Attention UNet': './visualize/Comparasion/ATTUNet',
+            'AAU-net': './visualize/Comparasion/AAU-net',
+            'SwinUNet': './visualize/Comparasion/SwinUNet',
+            'TransUNet': './visualize/Comparasion/TransUNet',
+            'HiFormer-L': './visualize/Comparasion/HiFormer-L',
+            'H2Former': './visualize/Comparasion/H2Former',
+            'BEFUNet': './visualize/Comparasion/BEFUNet',
+            'U-Mamba': './visualize/Comparasion/UMamba',
+            'Swin-UMamba': './visualize/Comparasion/SwinUMamba',
+            'VM-UNet-V2': './visualize/Comparasion/VMUNetv2',
+            'Ours': './visualize/Comparasion/Ours'
         }
         # --------------------------对比实验结果可视化--------------------------
         input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)
@@ -420,13 +423,13 @@ if __name__ == '__main__':
         ablation_input_dir = './visualize/Ablation/images'
         ablation_gt_dir = './visualize/Ablation/masks'
         ablation_pred_dirs = {
-            'baseline': './visualize/Ablation/baseline',
-            'w/o CNN': './visualize/Ablation/CNN',
-            'w/o TiFusion': './visualize/Ablation/TiFusion',
-            'w/o MWFFD': './visualize/Ablation/MWFFD',
-            'w/o Loss': './visualize/Ablation/Hybrid',
-            'BC-Mamba': './visualize/Ablation/Ours'
+            '(b)': './visualize/Ablation/c',
+            '(c)': './visualize/Ablation/b',
+            '(d)': './visualize/Ablation/m',
+            '(e)': './visualize/Ablation/m+c',
+            '(f)': './visualize/Ablation/m+c+FIFM'
         }
         #--------------------------消融实验结果可视化-----------------------
         abla_input_images, abla_gt_images, abla_pred_images = load_images(ablation_input_dir, ablation_gt_dir, ablation_pred_dirs)
         ablation_segmentation_results(abla_input_images, abla_gt_images, abla_pred_images, ablation_methods)
+        # simple_visualize_comparison(abla_input_images, abla_gt_images, abla_pred_images, ablation_methods)

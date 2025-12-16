@@ -40,12 +40,12 @@ def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimi
         out1, out2, out3, out4 = model(image)
         mask = torch.unsqueeze(mask, dim=1)
         '''HybridLoss'''
-        loss1 = criterion(out1, mask, current_step)
-        loss2 = criterion(out2, mask, current_step)
-        loss3 = criterion(out3, mask, current_step)
-        loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
+        # loss1 = criterion(out1, mask, current_step)
+        # loss2 = criterion(out2, mask, current_step)
+        # loss3 = criterion(out3, mask, current_step)
+        # loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
         '''BCEDiceLoss'''
-        # loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
+        loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
         avg_meters['train_loss'].update(loss.item(), image.size(0))
         optimizer.zero_grad()
         accelerator.backward(loss)
@@ -82,7 +82,8 @@ def main():
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
 
-    criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary
+    # criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary loss
+    criterion = BCEDiceLoss()  #  HybridLossWithDynamicBoundary
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     # model, optimizer, train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
     scheduler = get_scheduler(optimizer=optimizer)
@@ -93,9 +94,8 @@ def main():
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 梯度裁剪
     for epoch in range(config['epochs']):
         accelerator.print('Epoch [%d/%d]' % (epoch + 1, config['epochs']))
-        avg_meters = {'train_loss': AverageMeter(), 'val_iou': AverageMeter(), 'val_dice': AverageMeter(),
-                      'val_acc': AverageMeter(), 'val_pc': AverageMeter(), 'val_se': AverageMeter(),
-                      'val_sp': AverageMeter()}
+        avg_meters = {'train_loss': AverageMeter(), 'val_iou': AverageMeter(), 'val_dice': AverageMeter(),'val_acc': AverageMeter(),
+                      'val_pc': AverageMeter(), 'val_se': AverageMeter(),'val_sp': AverageMeter(),'val_hd95': AverageMeter()}
         try:
             model.train()
             if deep_supervision:
@@ -114,20 +114,21 @@ def main():
                         pred = model(image)   #torch.Size([24, 1, 256, 256]) torch.Size([24, 256, 256])
                 pred, mask = accelerator.gather_for_metrics((pred, mask))
                 mask = torch.unsqueeze(mask,dim=1)
-                iou, dice, SE, PC, SP, ACC = iou_score(pred, mask)
+                iou, dice, SE, PC, SP, ACC, HD95 = iou_score(pred, mask)
                 avg_meters['val_iou'].update(iou, image.size(0))
                 avg_meters['val_dice'].update(dice, image.size(0))
                 avg_meters['val_acc'].update(ACC, image.size(0))
                 avg_meters['val_pc'].update(PC, image.size(0))
                 avg_meters['val_se'].update(SE, image.size(0))
                 avg_meters['val_sp'].update(SP, image.size(0))
+                avg_meters['val_hd95'].update(HD95, image.size(0))
 
             accelerator.log({'val_iou': avg_meters['val_iou'].avg, 'val_dice': avg_meters['val_dice'].avg,
                              'val_acc': avg_meters['val_acc'].avg, 'val_pc': avg_meters['val_pc'].avg,
-                             'val_se': avg_meters['val_se'].avg, 'val_sp': avg_meters['val_sp'].avg})
-            accelerator.print('val_iou %.4f - val_dice %.4f - val_acc %.4f -val_pc %.4f - val_se %.4f - val_sp %.4f'
+                             'val_se': avg_meters['val_se'].avg, 'val_sp': avg_meters['val_sp'].avg, 'val_hd95': avg_meters['val_hd95'].avg})
+            accelerator.print('val_iou %.4f - val_dice %.4f - val_acc %.4f -val_pc %.4f - val_se %.4f - val_sp %.4f - val_hd95 %.4f'
                               % (avg_meters['val_iou'].avg, avg_meters['val_dice'].avg, avg_meters['val_acc'].avg,
-                                 avg_meters['val_pc'].avg,avg_meters['val_se'].avg,avg_meters['val_sp'].avg))
+                                 avg_meters['val_pc'].avg,avg_meters['val_se'].avg,avg_meters['val_sp'].avg, avg_meters['val_hd95'].avg))
             accelerator.wait_for_everyone()
             train_epochs = config['epochs']
             model_path = os.path.join(
@@ -160,7 +161,7 @@ if __name__ == '__main__':
         logging.info("Setting fixed seed: {}".format(config['seed']))
         set_random_seed(config['seed'])
     os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)  # 创建模型输出文件夹
-    os.makedirs(os.path.join(config['output'],config['model'], config['Ablation'],config['dataset']),exist_ok=True) # 消融实验输出文件夹
+    # os.makedirs(os.path.join(config['output'],config['model'], config['Ablation'],config['dataset']),exist_ok=True) # 消融实验输出文件夹
     os.makedirs(os.path.join(config['log_dir'],config['dataset']), exist_ok=True) # 创建日志文件夹
     log_data = []
     log_file = os.path.join(config['log_dir'], config['dataset'], f"{config['model']}_{config['epochs']}.xlsx")

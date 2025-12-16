@@ -31,7 +31,7 @@ def compute_complexity(config):
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
 def count_lora_parameters():
-    m = convnext_tiny(pretrained=False, lora_rank=8, lora_alpha=8.0)
+    m = convnext_tiny(pretrained=False, lora_rank=16, lora_alpha=32.0)
     print("Model built. Counting params before freeze:")
     count_parameters(m)  # initially all params trainable
 
@@ -71,9 +71,9 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
     lora = sum(p.numel() for n,p in model.named_parameters() if ("lora_A" in n) or ("lora_B" in n))
 
     print("----------------------------------------------")
-    print(f"Total Params:     {total / 1e6:.3f} M")
-    print(f"Trainable Params: {trainable / 1e6:.3f} M")
-    print(f"LoRA Params:      {lora / 1e6:.3f} M")
+    print(f"Total Params:     {total / 1e6:.9f} M")
+    print(f"Trainable Params: {trainable / 1e9:.9f} M")
+    print(f"LoRA Params:      {lora / 1e6:.9f} M")
     print("================================================")
 
     return macs, params
@@ -87,7 +87,8 @@ def main():
     model_path = os.path.join(
         config['output'],
         # config['model'],
-        "MedMamba", config['Ablation'],
+        "MedMamba",
+        config['Ablation'],
         "DDTI",
         "DDTI_pretrained_150_fuse_3.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
@@ -178,9 +179,9 @@ def main():
     torch.cuda.empty_cache()
 
 if __name__ == '__main__':
-    main()
+    # main()
 
-    # count_lora_parameters()
+    count_lora_parameters()
 
     # config = vars(parse_args())
     # compute_complexity(config)

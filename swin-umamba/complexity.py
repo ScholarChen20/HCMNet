@@ -6,22 +6,23 @@ import pandas as pd
 plt.rcParams['axes.unicode_minus'] = False
 
 # 46.50 49.67   ----  48.96 39.47
+# UMamba 76.38M-295.87G
 # 示例数据（与目标图一致）
 data = {
     'Model': ['H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet','BEFUNet',
               'UNet', 'UNet++', 'AAU-net', 'Attention U-Net',
-              'UMamba', 'VM-UNet-V2', 'SwinUMamba', 'MedMamba (Ours)'],
-    'Params': [33.68, 31.50, 93.23, 41.38, 42.61,
+              'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'LoMamba (Ours)'],
+    'Params': [33.68, 31.50, 105.28, 41.38, 42.61,
                31.04, 36.63, 53.22, 34.88,
-               76.38, 22.77, 59.88, 46.50],
+               3.21, 22.77, 59.88, 34.92],
     # 'FPS': [175, 150, 160, 155, 375, 75, 180, 325, 170, 190, 300, 180, 150, 175],
     # 'FLOPs': [8.62, 23.72, 12.23, 105.28, 8.7, 8.5, 36.99, 105.87, 11.76, 51.07, 147.94, 4.48, 43.91, 43.73],   # 1
-    'FLOPs': [98.65, 64.22, 98.68, 34.75, 31.82,
-              167.63, 212.34, 179.66, 204.06,
-              295.87, 17.59, 175.73, 22.62],
-    'Dice': [81.54, 82.06, 78.37, 75.72, 81.36,
-             77.31, 77.90, 76.59, 77.68,
-             80.32, 82.48, 83.53, 85.65]
+    'FLOPs': [23.72, 12.23, 25.35, 8.70, 8.50,
+              48.32, 138.28, 57.12, 66.7,
+              0.962, 4.25, 30.49, 8.44],
+    'Dice': [81.12, 82.21, 77.43, 74.24, 79.04,
+             77.31, 77.23, 74.52, 76.31,
+             76.03, 81.61, 81.05, 84.37]
 }
 
 df = pd.DataFrame(data)
@@ -128,5 +129,143 @@ def plot_complexity():
     plt.savefig('./visualize/fps_vs_dice/fps_vs_dice_clean.png', dpi=1000, bbox_inches='tight')
     plt.show()
 
+# 定义标记样式（右图用不同形状）
+    marker_map = {
+        'H2Former': '*',
+        'HiFormer-L': '^',
+        'TransUNet': 's',
+        'SwinUNet': 'D',
+        'BEFUNet': 'p',
+        'UNet': 'o',
+        'UNet++': 'v',
+        'AAU-net': '<',
+        'Attention U-Net': '>',
+        'MLAgg-UNet': 'h',
+        'VM-UNet-V2': '+',
+        'SwinUMamba': 'x',
+        'LoMamba (Ours)': 'X'
+    }
+
+def plot_dice_vs_params_and_flops():
+    """
+    同时绘制 Dice vs Params 和 Dice vs FLOPs 两个散点图。
+    - 左图：统一形状，不同颜色
+    - 右图：统一颜色，不同形状
+    - 上方显示颜色图例
+    - 子图间距紧凑
+    """
+    # 使用原始数据
+    df = pd.DataFrame({
+        'Model': ['H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet','BEFUNet',
+                  'UNet', 'UNet++', 'AAU-net', 'Attention U-Net',
+                  'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'LoMamba (Ours)'],
+        'Params': [34.68, 31.50, 105.28, 41.38, 42.61,
+                   31.04, 36.63, 53.22, 34.88,
+                   3.21, 22.77, 59.88, 34.92],
+        'FLOPs': [23.72, 14.53, 25.35, 8.70, 8.50,
+                  48.32, 138.00, 57.12, 66.7,
+                  1.96, 4.25, 30.49, 8.44],
+        'Dice': [81.10, 82.41, 77.43, 74.24, 79.04,
+                 77.31, 77.23, 74.52, 76.31,
+                 76.03, 81.61, 80.85, 84.37]
+    })
+
+    # 定义颜色映射（参考你提供的图）
+    color_map = {
+        'H2Former': 'red',
+        'HiFormer-L': 'blue',
+        'TransUNet': 'cyan',
+        'SwinUNet': 'green',
+        'BEFUNet': 'magenta',
+        'UNet': 'orange',
+        'UNet++': 'yellow',
+        'AAU-net': 'brown',
+        'Attention U-Net': 'purple',
+        'MLAgg-UNet': 'gray',
+        'VM-UNet-V2': 'darkgreen',
+        'SwinUMamba': 'pink',
+        'LoMamba (Ours)': 'lightblue'
+    }
+
+
+
+    # 创建图形和子图
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig.suptitle('Performance vs Complexity Analysis', fontsize=14, fontweight='bold')
+
+    # ==================== 左图：Dice vs Params（统一形状，不同颜色）====================
+    for idx, row in df.iterrows():
+        model_name = row['Model']
+        x, y = row['Params'], row['Dice']
+        color = color_map[model_name]
+        size = 110
+        marker = 'o'  # 统一使用圆形
+
+        ax1.scatter(x, y, color=color, s=size, marker=marker, edgecolors='black', linewidth=0.8)
+        if model_name == 'VM-UNet-V2':
+            ax1.annotate(model_name, xy=(x, y), xytext=(x, y + 0.2),
+                         fontsize=10, ha='right', va='bottom', color='black')
+        elif model_name == 'UNet' or model_name == 'SwinUNet' or model_name == 'TransUNet':
+            ax1.annotate(model_name, xy=(x, y), xytext=(x, y + 0.2),
+                         fontsize=10, ha='right', va='bottom', color='black')
+        elif model_name == 'LoMamba (Ours)':  # 加粗
+            ax1.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2), fontsize=10, ha='left', va='bottom', color='black', weight='bold')
+        else:
+            ax1.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),
+                         fontsize=10, ha='left', va='bottom', color='black')
+
+    ax1.set_xlabel('Params (M)', fontsize=11)
+    ax1.set_ylabel('Average Dice Score (%)', fontsize=11)
+    ax1.set_xlim(0, 110)
+    ax1.set_ylim(73, 86)
+    ax1.grid(True, linestyle='--', alpha=0.6)
+
+    # ==================== 右图：Dice vs FLOPs（统一形状，不同颜色）====================
+    for idx, row in df.iterrows():
+        model_name = row['Model']
+        x, y = row['FLOPs'], row['Dice']
+        color = color_map[model_name]
+        size = 115
+        marker = '*'
+
+        ax2.scatter(x, y, color=color, s=size, marker=marker, edgecolors='black', linewidth=0.5)
+        if model_name == 'SwinUMamba':
+            ax2.annotate(model_name, xy=(x, y), xytext=(x, y - 0.7),
+                         fontsize=10, ha='left', va='bottom', color='black')
+        elif model_name == 'UNet++' :
+            ax2.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),
+                         fontsize=10, ha='right', va='bottom', color='black')
+        elif model_name == 'VM-UNet-V2':
+            ax2.annotate(model_name, xy=(x, y), xytext=(x + 0.25, y + 0.1),
+                         fontsize=10, ha='left', va='bottom', color='black')
+        elif model_name == 'LoMamba (Ours)':  # 加粗
+            ax2.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),fontsize=10, ha='left', va='bottom', color='black', weight='bold')
+        else:
+            ax2.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),
+                         fontsize=10, ha='left', va='bottom', color='black')
+
+    ax2.set_xlabel('GFLOPs', fontsize=11)
+    ax2.set_ylabel('Average Dice Score (%)', fontsize=11)
+    ax2.set_xlim(0, 140)
+    ax2.set_ylim(73, 86)
+    ax2.grid(True, linestyle='--', alpha=0.6)
+
+    # # ==================== 添加顶部图例（颜色-方法对应）====================
+    # legend_elements = []
+    # for model, color in color_map.items():
+    #     legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=8, label=model))
+    #
+    # # 将图例放在两个子图上方，居中
+    # ax1.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=7, fontsize=9)
+
+    # 调整布局，减小子图间距
+    # plt.tight_layout(pad=3.0)
+    plt.savefig('./visualize/fps_vs_dice/dice_vs_params_and_flops.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
+
+
 if __name__ == '__main__':
-    plot_complexity()
+    # plot_complexity()
+    plot_dice_vs_params_and_flops()
+

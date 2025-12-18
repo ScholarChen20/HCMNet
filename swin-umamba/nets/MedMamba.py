@@ -24,6 +24,53 @@ except:
 
 DropPath.__repr__ = lambda self: f"timm.DropPath({self.drop_prob})"
 
+class LoRALinear(nn.Module):
+    """
+    LoRA for Linear-like layers.
+    - in_features: input dim
+    - out_features: output dim
+    - rank: LoRA rank r
+    - alpha: scaling factor (alpha/r applied to update)
+    - bias: whether to keep bias term
+    Notes:
+      - We keep parameter names 'weight' and 'bias' so pretrained state_dict can load.
+      - LoRA params are lora_A (r, in) and lora_B (out, r).
+      - Low-rank update: delta_W = lora_B @ lora_A  -> shape (out, in)
+      - Final forward: F.linear(x, weight, bias) + F.linear(x, delta_W)
+    """
+    def __init__(self, in_features, out_features, rank=8, alpha=16.0, bias=True):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.rank = rank
+        self.alpha = rank * 2
+        self.scaling = rank * 2 / max(1, rank)
+        # main weight and bias (kept, can be loaded from pretrained)
+        self.weight = nn.Parameter(torch.empty(out_features, in_features))
+        if bias:
+            self.bias = nn.Parameter(torch.zeros(out_features))
+        else:
+            self.register_parameter('bias', None)
+        # LoRA parameters: A: (r, in), B: (out, r)
+        # we store A as (r, in) and B as (out, r) to compute B @ A -> (out, in)
+        self.lora_A = nn.Parameter(torch.zeros(self.rank, in_features))
+        self.lora_B = nn.Parameter(torch.zeros(out_features, self.rank))
+        # initialize
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B)
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, x):
+        # x shape: (..., in_features) - we apply linear on last dim
+        out = F.linear(x, self.weight, self.bias)
+        if self.rank > 0:
+            delta = (self.lora_B @ self.lora_A) * self.scaling  # (out, in)
+            out = out + F.linear(x, delta, None)
+        return out
 
 def flops_selective_scan_ref(B=1, L=256, D=768, N=16, with_D=True, with_Z=False, with_Group=True, with_complex=False):
     """
@@ -265,6 +312,7 @@ class SS2D(nn.Module):
             dt_scale=1.0,
             dt_init_floor=1e-4,
             dropout=0.,
+            rank=4,
             conv_bias=True,
             bias=False,
             device=None,
@@ -280,8 +328,9 @@ class SS2D(nn.Module):
         self.expand = expand
         self.d_inner = int(self.expand * self.d_model)
         self.dt_rank = math.ceil(self.d_model / 16) if dt_rank == "auto" else dt_rank
-
-        self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)
+        self.rank = rank
+        self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)   # todo revert
+        # self.in_proj = LoRALinear(self.d_model,self.d_inner * 2, rank=self.rank, alpha=32.0,bias=bias)
         self.conv2d = nn.Conv2d(
             in_channels=self.d_inner,
             out_channels=self.d_inner,
@@ -323,7 +372,8 @@ class SS2D(nn.Module):
         self.forward_core = self.forward_corev0
 
         self.out_norm = nn.LayerNorm(self.d_inner)
-        self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)
+        self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)  # todo revert
+        # self.out_proj = LoRALinear(self.d_inner, self.d_model, rank=self.rank, alpha=32.0, bias=bias)
         self.dropout = nn.Dropout(dropout) if dropout > 0. else None
 
     @staticmethod
@@ -507,11 +557,12 @@ class SS_Conv_SSM(nn.Module):
             norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),
             attn_drop_rate: float = 0,
             d_state: int = 16,
+            rank: int = 16,
             **kwargs,
     ):
         super().__init__()
         self.ln_1 = norm_layer(hidden_dim // 2)
-        self.self_attention = SS2D(d_model=hidden_dim // 2, dropout=attn_drop_rate, d_state=d_state, **kwargs)
+        self.self_attention = SS2D(d_model=hidden_dim // 2, dropout=attn_drop_rate, d_state=d_state, rank=rank, **kwargs)
         self.drop_path = DropPath(drop_path)
 
         self.conv33conv33conv11 = nn.Sequential(
@@ -561,6 +612,7 @@ class VSSLayer(nn.Module):
             downsample=None,
             use_checkpoint=False,
             d_state=16,
+            rank=16,
             **kwargs,
     ):
         super().__init__()
@@ -574,6 +626,7 @@ class VSSLayer(nn.Module):
                 norm_layer=norm_layer,
                 attn_drop_rate=attn_drop,
                 d_state=d_state,
+                rank=rank,
             )
             for i in range(depth)])
 
@@ -671,7 +724,7 @@ class VSSLayer_up(nn.Module):
 class VSSM(nn.Module):
     def __init__(self, patch_size=4, in_chans=3, num_classes=1000, depths=[2, 2, 4, 2], depths_decoder=[2, 9, 2, 2],
                  dims=[96, 192, 384, 768], dims_decoder=[768, 384, 192, 96], d_state=16, drop_rate=0.,
-                 attn_drop_rate=0., drop_path_rate=0.1,
+                 attn_drop_rate=0., drop_path_rate=0.1, rank = 16,
                  norm_layer=nn.LayerNorm, patch_norm=True,
                  use_checkpoint=False, **kwargs):
         super().__init__()
@@ -705,6 +758,7 @@ class VSSM(nn.Module):
                 dim=dims[i_layer],
                 depth=depths[i_layer],
                 d_state=math.ceil(dims[0] / 6) if d_state is None else d_state,  # 20240109
+                rank = rank,
                 drop=drop_rate,
                 attn_drop=attn_drop_rate,
                 drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
@@ -789,6 +843,7 @@ class MedMamba(nn.Module):
                  depths=[2, 2, 4, 2],
                  depths_decoder=[2, 2, 4, 2],
                  drop_path_rate=0.2,
+                 rank=16,
                  load_ckpt_path=None,
                  ):
         super().__init__()
@@ -800,6 +855,7 @@ class MedMamba(nn.Module):
                            depths=depths,
                            depths_decoder=depths_decoder,
                            drop_path_rate=drop_path_rate,
+                           rank=rank,
                            )
 
     def forward(self, x):
@@ -851,7 +907,17 @@ def load_partial_state_dict(model, state_dict):  #
         else:
             print(f'Skipping {name} as it is not in the model.')
 
-medmamba_t = VSSM(depths=[2, 2, 4, 2], dims=[96, 192, 384, 768], num_classes=6).to("cuda")
+def freeze_backbone_only_lora(model):
+    for name, param in model.named_parameters():
+        param.requires_grad = False
+
+    for name, param in model.named_parameters():
+        if "lora_A" in name or "lora_B" in name:
+            param.requires_grad = True
+            print("[Train LoRA]", name)
+
+
+medmamba_t = VSSM(depths=[2, 2, 4, 2], dims=[96, 192, 384, 768], num_classes=6, rank=16).to("cuda")
 medmamba_s = VSSM(depths=[2, 2, 8, 2], dims=[96, 192, 384, 768], num_classes=6).to("cuda")
 medmamba_b = VSSM(depths=[2, 2, 12, 2], dims=[128, 256, 512, 1024], num_classes=6).to("cuda")
 
@@ -887,9 +953,10 @@ def load_from(model,ckpt_path="./pretrained_ckpt/Breast_MedMamba.pth"):
     print("encoder loaded finished!")
 
 
-def medmamba_tiny():
-    model = MedMamba().cuda()
+def medmamba_tiny(rank=16):
+    model = MedMamba(rank=rank).cuda()
     load_from(model)
+    # freeze_backbone_only_lora(model)
     return model
 
 if __name__ == '__main__':

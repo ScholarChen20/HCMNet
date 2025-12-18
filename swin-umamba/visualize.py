@@ -116,10 +116,10 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
     """
     num_samples = len(input_images)
     num_methods = len(methods)
-    assert num_methods == 13, "需要10种分割方法"
+    assert num_methods == 13, "需要13种分割方法"
 
     fig, axes = plt.subplots(num_samples, num_methods + 1, figsize=(20, num_samples * 1.5))  #``figsize``控制图的大小,行距离、列距离
-    plt.subplots_adjust(wspace=0.05, hspace=0.05,left=0.05, right=0.95,top=0.95, bottom=0.05) #left=0.05,减少左边距,上边距
+    plt.subplots_adjust(wspace=0.05, hspace=0.05,left=0.1, right=0.90,top=0.90, bottom=0.1) #left=0.05,减少左边距,上边距
 
     for i in range(num_samples):
         # ==================== 第一列：超声原图+真实边界 ====================
@@ -140,7 +140,7 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
 
         axes[i, 0].imshow(blended)
         if i == 0:
-            axes[i, 0].set_title("Input with GT", fontsize=12)
+            axes[i, 0].set_title("Input with GT", fontsize=10)
         axes[i, 0].axis('off')
 
         # # 在每行第一个子图的左侧添加文本标注（域名称），缩短左边距
@@ -204,7 +204,7 @@ def plot_segmentation_results(input_images, gt_images, pred_images, methods, dat
             # axes[i, col_idx].imshow(canvas, alpha =alpha_mask / 255.0)
 
             if i == 0:
-                axes[i, col_idx].set_title(method, fontsize=12)
+                axes[i, col_idx].set_title(method, fontsize=10)
             axes[i, col_idx].axis('off')
 
 
@@ -367,10 +367,10 @@ if __name__ == '__main__':
     # methods = ['DeepAll', 'FedDG', 'DoFe', 'RAM-DSIR', 'TriD', 'DDG(Ours)']
     methods = ['UNet', 'UNet++', 'Attention UNet', 'AAU-net',
                'SwinUNet', 'TransUNet', 'HiFormer-L', 'H2Former', 'BEFUNet',
-               'U-Mamba', 'Swin-UMamba','VM-UNet-V2', 'Ours']  # 对比方法
+               'Swin-UMamba','VM-UNet-V2', 'MLAgg-UNet', 'Ours']  # 对比方法
     ablation_methods = ['(b)','(c)', '(d)', '(e)', '(f)']
 
-    type = "Comparison"
+    type = "Transfer"
 
     if type == "Comparison":
         # 对比实验图像路径
@@ -386,9 +386,10 @@ if __name__ == '__main__':
             'HiFormer-L': './visualize/Comparasion/HiFormer-L',
             'H2Former': './visualize/Comparasion/H2Former',
             'BEFUNet': './visualize/Comparasion/BEFUNet',
-            'U-Mamba': './visualize/Comparasion/UMamba',
+            # 'U-Mamba': './visualize/Comparasion/UMamba',
             'Swin-UMamba': './visualize/Comparasion/SwinUMamba',
             'VM-UNet-V2': './visualize/Comparasion/VMUNetv2',
+            'MLAgg-UNet': './visualize/Comparasion/UMamba',
             'Ours': './visualize/Comparasion/Ours'
         }
         # --------------------------对比实验结果可视化--------------------------
@@ -410,9 +411,10 @@ if __name__ == '__main__':
             'HiFormer-L': './visualize/Transfer-Visualize/HiFormer-L',
             'H2Former': './visualize/Transfer-Visualize/H2Former',
             'BEFUNet': './visualize/Transfer-Visualize/BEFUNet',
-            'U-Mamba': './visualize/Transfer-Visualize/UMamba',
+            # 'U-Mamba': './visualize/Transfer-Visualize/UMamba',
             'Swin-UMamba': './visualize/Transfer-Visualize/SwinUMamba',
             'VM-UNet-V2': './visualize/Transfer-Visualize/VMUNetv2',
+            'MLAgg-UNet': './visualize/Transfer-Visualize/UMamba',
             'Ours': './visualize/Transfer-Visualize/Ours'
         }
         # --------------------------域转移实验结果可视化--------------------------

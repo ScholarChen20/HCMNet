@@ -37,7 +37,7 @@ def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimi
         step += iter
         current_step = epoch * len(train_loader) + iter
         image, mask = data
-        out1, out2, out3, out4 = model(image)
+        out = model(image)
         mask = torch.unsqueeze(mask, dim=1)
         '''HybridLoss'''
         # loss1 = criterion(out1, mask, current_step)
@@ -45,7 +45,7 @@ def is_deep_supervision(accelerator, avg_meters, criterion, epoch, model, optimi
         # loss3 = criterion(out3, mask, current_step)
         # loss = loss1 * 0.5 + 0.25 * loss2 + 0.125 * loss3 # 0.25 0.125
         '''BCEDiceLoss'''
-        loss = criterion(out1, mask) + 0.25 * criterion(out2, mask) + 0.125 * criterion(out3, mask)  # 0.25 0.125
+        loss = criterion(out[0], mask) + 0.25 * criterion(out[1], mask) + 0.125 * criterion(out[2], mask)  # 0.25 0.125
         avg_meters['train_loss'].update(loss.item(), image.size(0))
         optimizer.zero_grad()
         accelerator.backward(loss)
@@ -134,10 +134,10 @@ def main():
             model_path = os.path.join(
                 config['output'],
                 config['model'],
-                # config['Ablation'],
+                config['Ablation'],
                 config['dataset'],
-                # f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth" )
-                f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
+                f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth" )
+                # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     config = vars(parse_args())
     if config['seed'] >= 0:
         logging.info("Setting fixed seed: {}".format(config['seed']))
-        set_random_seed(config['seed'])
+        # set_random_seed(config['seed'])
     os.makedirs(os.path.join(config['output'],config['model'],config['dataset']), exist_ok=True)  # 创建模型输出文件夹
     # os.makedirs(os.path.join(config['output'],config['model'], config['Ablation'],config['dataset']),exist_ok=True) # 消融实验输出文件夹
     os.makedirs(os.path.join(config['log_dir'],config['dataset']), exist_ok=True) # 创建日志文件夹

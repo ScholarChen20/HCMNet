@@ -20,7 +20,7 @@ from nets.BCMamba import count_parameters,convnext_tiny,freeze_pretrained_weight
 current_date = datetime.date.today()
 
 def compute_complexity(config):
-    model = net(config['model'], config['rank'], config['deep_supervision'])
+    model = net('SwinUMamba', config['rank'], config['deep_supervision'])
     # input = torch.randn(1, 3, 256, 256).cuda()  # 确保输入在 GPU 上
     # flops, params = profile(model, inputs=(input,))
     # print('flops:{}G'.format(flops/1e9)) #转为G
@@ -81,30 +81,30 @@ def count_flops_and_params(model, input_shape=( 3, 256, 256)):
 
 def main():
     config = vars(parse_args())
-    model = net('MedMamba', config['rank'], config['deep_supervision'])
-    # model = net(config['model'], config['rank'], config['deep_supervision'])
+    # model = net('MedMamba', config['rank'], config['deep_supervision'])
+    model = net(config['model'], config['rank'], config['deep_supervision'])
     train_epochs = config['epochs']
     model_path = os.path.join(
         config['output'],
-        # config['model'],
-        "MedMamba",
-        config['Ablation'],
-        "DDTI",
-        "DDTI_pretrained_150_fuse_3.pth")
+        config['model'],
+        # "MedMamba",
+        # config['Ablation'],
+        "BUSI",
+        "BUSI_pretrained_150_3.pth")
         # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config['val_dataset']), "test"), mode="val", img_size=256)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 16, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False)
     val_names = val_dataset.names
     count = 0
     top_dice_list = []
     top_k = 5
 
-    mask_pred = os.path.join(config['output'], "MedMamba", config['Ablation'], config['val_dataset'])
+    mask_pred = os.path.join(config['output'], config['model'], config['val_dataset'])
     #pred生成路径
-    file_dir = os.path.join(mask_pred, 'fuse3_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    file_dir = os.path.join(mask_pred, 'BUSI_3_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 
@@ -128,7 +128,7 @@ def main():
                 count = count + 1
                 val_names_batch = val_names[count:count + len(mask)]  # 更新 val_names_batch
             target = torch.unsqueeze(target,dim=1)
-            iou, dice, SE, PC, SP, ACC = iou_score(output, target)
+            iou, dice, SE, PC, SP, ACC, hd95 = iou_score(output, target)
             avg_meters['test_iou'].update(iou, input.size(0))
             avg_meters['test_dice'].update(dice, input.size(0))
             avg_meters['test_acc'].update(ACC, input.size(0))
@@ -144,7 +144,7 @@ def main():
             else:
                 heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
 
-    print(f'*************MedMamba模型的在 STU 测试指标结果:**************')
+    print(f'*************MLAggUNet模型的在 STU 测试指标结果:**************')
     print("IoU:", avg_meters['test_iou'].avg)
     print("Dice:", avg_meters['test_dice'].avg)
     print("ACC:", avg_meters['test_acc'].avg)
@@ -181,10 +181,10 @@ def main():
 if __name__ == '__main__':
     # main()
 
-    count_lora_parameters()
+    # count_lora_parameters()
 
-    # config = vars(parse_args())
-    # compute_complexity(config)
+    config = vars(parse_args())
+    compute_complexity(config)
     # model = net(config['model'], config['rank'], config['deep_supervision'])
     # count_flops_and_params(model)
 

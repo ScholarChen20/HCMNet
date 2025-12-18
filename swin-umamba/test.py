@@ -33,16 +33,16 @@ def main(config):
     model_path = os.path.join(
         config['output'],
         config['model'],
-        # config['Ablation'],   #  消融路劲配置
+        config['Ablation'],   #  消融路劲配置
         config['dataset'],
-        # f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth")
-        f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
+        f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth")
+        # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth")
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
     val_dataset = MedicineDataset(os.path.join(get_dataset(config["dataset"]), "test"), mode="val", img_size=config['img_size'])
     # val_dataset = ThyroidDataset(os.path.join(get_dataset(config['dataset']),"test"), get_transform(train=False))
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 8, shuffle=False)
     # val_dataset = PolypDataset(os.path.join(get_dataset(config['dataset']),"val-seg"),load_transform(train=False))
     # val_loader = torch.utils.data.DataLoader(dataset=val_dataset,batch_size=24,shuffle=False,collate_fn=PolypDataset.collate_fn)
 
@@ -52,8 +52,9 @@ def main(config):
     top_k = 5
 
     #掩码pred-生成路径  config['Ablation'] \  config['ablaType'] + "_" +
-    mask_pred = os.path.join(config['output'], config['model'], config['dataset'])
-    file_dir = os.path.join(mask_pred, config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
+    # mask_pred = os.path.join(config['output'], config['model'], config['dataset'])
+    mask_pred = os.path.join(config['output'], config['model'], config['Ablation'], config['dataset'])
+    file_dir = os.path.join(mask_pred, config['ablaType'] + "_" + config['iteration'] + '_pred_' + str(current_date.strftime("%Y-%m-%d")))
     os.makedirs(file_dir, exist_ok=True)
     file_path = file_dir + "/Metric.xlsx"
 

@@ -329,8 +329,8 @@ class SS2D(nn.Module):
         self.d_inner = int(self.expand * self.d_model)
         self.dt_rank = math.ceil(self.d_model / 16) if dt_rank == "auto" else dt_rank
         self.rank = rank
-        self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)   # todo revert
-        # self.in_proj = LoRALinear(self.d_model,self.d_inner * 2, rank=self.rank, alpha=32.0,bias=bias)
+        # self.in_proj = nn.Linear(self.d_model, self.d_inner * 2, bias=bias, **factory_kwargs)   # todo revert
+        self.in_proj = LoRALinear(self.d_model,self.d_inner * 2, rank=self.rank, alpha=32.0,bias=bias)
         self.conv2d = nn.Conv2d(
             in_channels=self.d_inner,
             out_channels=self.d_inner,
@@ -372,8 +372,8 @@ class SS2D(nn.Module):
         self.forward_core = self.forward_corev0
 
         self.out_norm = nn.LayerNorm(self.d_inner)
-        self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)  # todo revert
-        # self.out_proj = LoRALinear(self.d_inner, self.d_model, rank=self.rank, alpha=32.0, bias=bias)
+        # self.out_proj = nn.Linear(self.d_inner, self.d_model, bias=bias, **factory_kwargs)  # todo revert
+        self.out_proj = LoRALinear(self.d_inner, self.d_model, rank=self.rank, alpha=32.0, bias=bias)
         self.dropout = nn.Dropout(dropout) if dropout > 0. else None
 
     @staticmethod

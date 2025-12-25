@@ -167,3 +167,23 @@ class Attention(nn.Module):
 
         out = self.project_out(out)
         return out
+
+# from openai import OpenAI
+# client = OpenAI(
+#     # 若没有配置环境变量，请用百炼API Key将下行替换为：api_key="sk-xxx"
+#     # api_key="sk-d302b6e36ff7442197787f7f6fe83ac5",
+#     # base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+#     api_key="sf_yyy000123",
+#     base_url="http://0.0.0.0:7890/v1",
+# )
+#
+# completion = client.chat.completions.create(
+#     # model="qwen-plus",
+#     model="Qwen3-8B",
+#     messages=[
+#         {"role": "system", "content": "You are a helpful assistant."},
+#         {"role": "user", "content": "Hello!"},
+#     ],
+#     max_tokens=400,
+# )
+# print(completion.choices[0].message.content)

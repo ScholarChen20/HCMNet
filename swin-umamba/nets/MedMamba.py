@@ -956,7 +956,7 @@ def load_from(model,ckpt_path="./pretrained_ckpt/Breast_MedMamba.pth"):
 def medmamba_tiny(rank=16):
     model = MedMamba(rank=rank).cuda()
     load_from(model)
-    # freeze_backbone_only_lora(model)
+    freeze_backbone_only_lora(model)
     return model
 
 if __name__ == '__main__':

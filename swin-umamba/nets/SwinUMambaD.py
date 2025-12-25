@@ -1049,20 +1049,26 @@ class TIF(nn.Module):
         self.linear_s = nn.Linear(dim_s, dim_l)
         self.linear_l = nn.Linear(dim_l, dim_s)
         # channel attention for F_g, use SE Block
-        self.fc1 = nn.Conv2d(dim_l, dim_l // 4, kernel_size=1)
-        self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(dim_l // 4, dim_l, kernel_size=1)
-        self.sigmoid = nn.Sigmoid()
+        # self.fc1 = nn.Conv2d(dim_l, dim_l // 4, kernel_size=1)
+        # self.relu = nn.ReLU(inplace=True)
+        # self.fc2 = nn.Conv2d(dim_l // 4, dim_l, kernel_size=1)
+        # self.sigmoid = nn.Sigmoid()
         # spatial attention for F_l
         # self.compress = ChannelPool()
         # self.spatial = Conv(2, 1, 7, bn=True, relu=False, bias=False)
         self.conv_l = nn.Sequential(
-            nn.Conv2d(dim_l, dim_s, 5,1,2),
+            # 深度卷积：对每个输入通道应用卷积
+            nn.Conv2d(dim_l, dim_l, kernel_size=5, stride=1, padding=2, groups=dim_l),
+            # 逐点卷积：1x1卷积来改变通道数
+            nn.Conv2d(dim_l, dim_s, kernel_size=1, stride=1),
             nn.BatchNorm2d(dim_s),
             nn.ReLU(inplace=True),
         )
         self.conv_s = nn.Sequential(
-            nn.Conv2d(dim_s, dim_l, 3,1,1),
+            # 深度卷积：对每个输入通道应用卷积
+            nn.Conv2d(dim_s, dim_s, kernel_size=3, stride=1, padding=1, groups=dim_s),
+            # 逐点卷积：1x1卷积来改变通道数
+            nn.Conv2d(dim_s, dim_l, kernel_size=1, stride=1),
             nn.BatchNorm2d(dim_l),
             nn.ReLU(inplace=True),
         )

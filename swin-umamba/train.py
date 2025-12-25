@@ -134,10 +134,10 @@ def main():
             model_path = os.path.join(
                 config['output'],
                 config['model'],
-                config['Ablation'],
+                # config['Ablation'],
                 config['dataset'],
-                f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth" )
-                # f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
+                # f"{config['model_pth']}_{train_epochs}_{config['ablaType']}_{config['iteration']}.pth" )
+                f"{config['model_pth']}_{train_epochs}_{config['iteration']}.pth" )
             if avg_meters['val_iou'].avg > best_iou:
                 best_iou = avg_meters['val_iou'].avg
                 unwrapped_model = accelerator.unwrap_model(model)

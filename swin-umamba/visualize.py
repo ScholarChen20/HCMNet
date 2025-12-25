@@ -318,13 +318,13 @@ def show():
 
 def simple_visualize_comparison(input_images, gt_images, pred_images, methods, save_path=None):
     """
-    简化版可视化：每行展示原始图像 + GT + 各方法预测掩码
+    简化版可视化：每行展示原始图像 + GT + 各方法预测掩码（并叠加GT边界）
     """
     num_samples = len(input_images)
     num_methods = len(methods)
 
     # 创建子图：num_samples 行 × (1 + 1 + num_methods) 列
-    fig, axes = plt.subplots(num_samples, 1 + 1 + num_methods, figsize=(15, num_samples * 2))
+    fig, axes = plt.subplots(num_samples, 1 + 1 + num_methods, figsize=(20, num_samples * 1.95))
     plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.05, right=0.95, bottom=0.05)
 
     for i in range(num_samples):
@@ -340,13 +340,27 @@ def simple_visualize_comparison(input_images, gt_images, pred_images, methods, s
         axes[i, 1].imshow(gt_mask, cmap='gray')
         axes[i, 1].axis('off')
 
-        # ==================== 第三列及以后：各方法预测 ====================
+        # ==================== 第三列及以后：各方法预测 + GT边界 ====================
         for j, method in enumerate(methods):
             pred_mask = cv2.imread(pred_images[method][i], cv2.IMREAD_GRAYSCALE)
             if pred_mask is None:
                 pred_mask = np.zeros((256, 256), dtype=np.uint8)
             pred_mask = cv2.resize(pred_mask, (256, 256))
-            axes[i, j + 2].imshow(pred_mask, cmap='gray')
+
+            # 读取并处理GT掩码用于提取轮廓
+            gt_mask_resized = cv2.resize(cv2.imread(gt_images[i], cv2.IMREAD_GRAYSCALE), (256, 256))
+            contours, _ = cv2.findContours(gt_mask_resized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # 创建三通道画布：将单通道预测掩码扩展为RGB
+            canvas = np.stack([pred_mask] * 3, axis=-1)  # 形状 (256, 256, 3)，值相同
+
+            # 在预测图上绘制GT轮廓（红色）
+            overlay = canvas.copy()
+            cv2.drawContours(overlay, contours, -1, (255, 0, 0), 2)  # 红色轮廓
+            alpha = 0.8  # 透明度
+            blended = cv2.addWeighted(overlay, alpha, canvas, 1 - alpha, 0)
+
+            axes[i, j + 2].imshow(blended)
             axes[i, j + 2].axis('off')
 
     # 设置列标题（在第一行下方）
@@ -362,6 +376,107 @@ def simple_visualize_comparison(input_images, gt_images, pred_images, methods, s
         plt.savefig(save_path, dpi=1000, bbox_inches='tight')
     plt.show()
 
+def load_and_merge_masks(mask_paths, target_size):
+    """
+    mask_paths: list[str] or str
+    target_size: (H, W)
+    return: binary mask [H,W] 0/1
+    """
+    if isinstance(mask_paths, str):
+        mask_paths = [mask_paths]
+
+    merged = np.zeros(target_size, dtype=np.uint8)
+
+    for p in mask_paths:
+        if not os.path.exists(p):
+            continue
+        m = cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+        m = cv2.resize(m, target_size[::-1])
+        merged = np.logical_or(merged, m > 0)
+
+    return merged.astype(np.uint8)
+
+def overlay_mask(
+    image_bgr,
+    mask,
+    color=(255, 255, 255),   # 默认红色 (B,G,R)
+    alpha=0.45,
+    draw_contour=True
+):
+    """
+    image_bgr: [H,W,3]
+    mask: [H,W] 0/1
+    """
+    overlay = image_bgr.copy()
+
+    # --- 填充区域 ---
+    colored = np.zeros_like(image_bgr)
+    colored[:] = color
+
+    overlay[mask == 1] = (
+        overlay[mask == 1] * (1 - alpha) +
+        colored[mask == 1] * alpha
+    ).astype(np.uint8)
+
+    # --- 边界 ---
+    if draw_contour:
+        cnts, _ = cv2.findContours(
+            mask.astype(np.uint8),
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE
+        )
+        cv2.drawContours(overlay, cnts, -1, color, 2)
+
+    return overlay
+
+def visualize_batch(cases, save_path=None, mask_color=(255, 0, 0),
+                    fig_w=8, row_h=3, bottom=0.12, title_fs=12):
+    """
+    bottom: 底部留白比例（0~1），越大文字离图越远
+    """
+    n = len(cases)
+    col_titles = ["GT", "Swin-UMamba", "Proposed Method"]
+
+    fig, axes = plt.subplots(n, 3, figsize=(fig_w, row_h * n))
+    if n == 1:
+        axes = np.expand_dims(axes, 0)
+
+    # --- 绘图 ---
+    for i, case in enumerate(cases):
+        img = cv2.imread(case["img"])
+        img = cv2.resize(img, (256, 256))
+        H, W = img.shape[:2]
+
+        gt   = load_and_merge_masks(case["gt"],   (H, W))
+        unet = load_and_merge_masks(case["Swin-UMamba"], (H, W))
+        prop = load_and_merge_masks(case["prop"], (H, W))
+
+        visuals = [
+            overlay_mask(img, gt,   mask_color),
+            overlay_mask(img, unet, mask_color),
+            overlay_mask(img, prop, mask_color)
+        ]
+
+        for j in range(3):
+            axes[i, j].imshow(cv2.cvtColor(visuals[j], cv2.COLOR_BGR2RGB))
+            axes[i, j].axis("off")
+
+    # --- 布局：先 tight 再手动留出底部空间 ---
+    plt.tight_layout()
+    fig.subplots_adjust(bottom=bottom)  # ⭐ 关键：给底部文字留空间
+
+    # --- 底部列标题：用 figure 坐标固定位置 ---
+    x_positions = [1/6, 3/6, 5/6]  # 三列中心
+    y = bottom * 0.35             # ⭐ 文字放在留白区的中间，可调
+    for x, t in zip(x_positions, col_titles):
+        fig.text(x, y, t, ha="center", va="center", fontsize=title_fs)
+
+    if save_path:
+        fig.savefig(save_path, dpi=600)  # 不要 bbox_inches="tight" 否则又可能裁
+        print("Saved to:", save_path)
+
+    plt.show()
+
 if __name__ == '__main__':
     dataset_name = ['Site1','Site2','Site3','Site4']
     # methods = ['DeepAll', 'FedDG', 'DoFe', 'RAM-DSIR', 'TriD', 'DDG(Ours)']
@@ -370,7 +485,7 @@ if __name__ == '__main__':
                'Swin-UMamba','VM-UNet-V2', 'MLAgg-UNet', 'Ours']  # 对比方法
     ablation_methods = ['(b)','(c)', '(d)', '(e)', '(f)']
 
-    type = "Transfer"
+    type = "Comparison1"
 
     if type == "Comparison":
         # 对比实验图像路径
@@ -394,10 +509,10 @@ if __name__ == '__main__':
         }
         # --------------------------对比实验结果可视化--------------------------
         input_images, gt_images, pred_images = load_images(input_dir, gt_dir, pred_dirs)
-        # methods = list(pred_dirs.keys())
-        # simple_visualize_comparison(input_images, gt_images, pred_images, methods)
+        methods = list(pred_dirs.keys())
+        simple_visualize_comparison(input_images, gt_images, pred_images, methods)
 
-        plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
+        # plot_segmentation_results(input_images, gt_images, pred_images, methods, dataset_name, save_path=None)
     elif type == "Transfer":
         input_dir = './visualize/Transfer-Visualize/images'
         gt_dir = './visualize/Transfer-Visualize/masks'
@@ -435,3 +550,25 @@ if __name__ == '__main__':
         abla_input_images, abla_gt_images, abla_pred_images = load_images(ablation_input_dir, ablation_gt_dir, ablation_pred_dirs)
         ablation_segmentation_results(abla_input_images, abla_gt_images, abla_pred_images, ablation_methods)
         # simple_visualize_comparison(abla_input_images, abla_gt_images, abla_pred_images, ablation_methods)
+
+    cases = [
+        {
+            "img": "./data/BUSI/train/images/benign (54).png",
+            "gt": ["./data/BUSI/train/masks/benign (54).png", "./data/BUSI/test/masks/benign (54)_1.png"],
+            "Swin-UMamba": "./visualize/introduction/unet/benign (54)_1.png",
+            "prop": "./visualize/introduction/ours/benign (54)_1.png"
+        },
+        {
+            "img": "./data/BUS/test/images/000099.png",
+            "gt": "./data/BUS/test/masks/000099.png",
+            "Swin-UMamba": "./visualize/introduction/unet/000099.png",
+            "prop": "./visualize/introduction/ours/000099.png"
+        }
+    ]
+
+    visualize_batch(
+        cases,
+        save_path="./fig1_comparison.png",
+        mask_color=(255, 128, 0)
+    )
+

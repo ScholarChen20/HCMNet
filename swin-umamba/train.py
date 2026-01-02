@@ -82,8 +82,8 @@ def main():
         train_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=True, train=True)  # Kvasir_dataset
         val_loader = get_loader(os.path.join(get_dataset(config["dataset"]),"train"), batch_size=config['batch_size'], shuffle=False, train=False)
 
-    criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary loss
-    # criterion = BCEDiceLoss()  #  HybridLossWithDynamicBoundary
+    # criterion = HybridLossWithDynamicBoundary()  #  HybridLossWithDynamicBoundary loss
+    criterion = BCEDiceLoss()  #  HybridLossWithDynamicBoundary
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])
     # model, optimizer, train_loader, val_loader = accelerator.prepare(model, optimizer, train_loader, val_loader)
     scheduler = get_scheduler(optimizer=optimizer)

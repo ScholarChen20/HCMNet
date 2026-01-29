@@ -11,7 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False
 data = {
     'Model': ['H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet','BEFUNet',
               'UNet', 'UNet++', 'AAU-net', 'Attention U-Net',
-              'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'LoMamba (Ours)'],
+              'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'BCF-Mamba (Ours)'],
     'Params': [33.68, 31.50, 105.28, 41.38, 42.61,
                31.04, 36.63, 53.22, 34.88,
                3.21, 22.77, 59.88, 11.75],
@@ -143,7 +143,7 @@ def plot_complexity():
         'MLAgg-UNet': 'h',
         'VM-UNet-V2': '+',
         'SwinUMamba': 'x',
-        'LoMamba (Ours)': 'X'
+        'BCF-Mamba (Ours)': 'X'
     }
 
 def plot_dice_vs_params_and_flops():
@@ -158,7 +158,7 @@ def plot_dice_vs_params_and_flops():
     df = pd.DataFrame({
         'Model': ['H2Former', 'HiFormer-L', 'TransUNet', 'SwinUNet','BEFUNet',
                   'UNet', 'UNet++', 'AAU-net', 'Attention U-Net',
-                  'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'LoMamba (Ours)'],
+                  'MLAgg-UNet', 'VM-UNet-V2', 'SwinUMamba', 'BCF-Mamba (Ours)'],
         'Params': [34.68, 31.50, 105.28, 41.38, 42.61,
                    31.04, 36.63, 53.22, 34.88,
                    3.21, 22.77, 59.88, 9.51],
@@ -184,7 +184,7 @@ def plot_dice_vs_params_and_flops():
         'MLAgg-UNet': 'gray',
         'VM-UNet-V2': 'darkgreen',
         'SwinUMamba': 'pink',
-        'LoMamba (Ours)': 'lightblue'
+        'BCF-Mamba (Ours)': 'lightblue'
     }
 
 
@@ -208,7 +208,7 @@ def plot_dice_vs_params_and_flops():
         elif model_name == 'UNet' or model_name == 'SwinUNet' or model_name == 'TransUNet':
             ax1.annotate(model_name, xy=(x, y), xytext=(x, y + 0.2),
                          fontsize=10, ha='right', va='bottom', color='black')
-        elif model_name == 'LoMamba (Ours)':  # 加粗
+        elif model_name == 'BCF-Mamba (Ours)':  # 加粗
             ax1.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2), fontsize=10, ha='left', va='bottom', color='black', weight='bold')
         else:
             ax1.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),
@@ -238,7 +238,7 @@ def plot_dice_vs_params_and_flops():
         elif model_name == 'VM-UNet-V2':
             ax2.annotate(model_name, xy=(x, y), xytext=(x + 0.25, y + 0.1),
                          fontsize=10, ha='left', va='bottom', color='black')
-        elif model_name == 'LoMamba (Ours)':  # 加粗
+        elif model_name == 'BCF-Mamba (Ours)':  # 加粗
             ax2.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),fontsize=10, ha='left', va='bottom', color='black', weight='bold')
         else:
             ax2.annotate(model_name, xy=(x, y), xytext=(x + 1, y + 0.2),

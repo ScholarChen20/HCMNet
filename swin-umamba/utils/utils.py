@@ -28,12 +28,20 @@ class AverageMeter(object):
         self.avg = 0
         self.sum = 0
         self.count = 0
+        self.values = []
 
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+        self.values.append(val)
+
+    def std(self):
+        if len(self.values) < 2:
+            return 0
+        values_arr = np.array(self.values)
+        return np.std(values_arr)
 
 
 def set_seed(seed):

@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from medpy import metric
 
 
@@ -53,6 +54,7 @@ def iou_score(output, target):
 
     output[output > 0] = 1
     target[target > 0] = 1
+    HD95 = 0.0  # 默认值，避免条件分支未定义
     if output.sum() > 0 and target.sum()>0:
         HD95 = metric.binary.hd95(output_, target_)
 
@@ -69,6 +71,74 @@ def iou_score(output, target):
     ACC = get_accuracy(output_, target_, threshold=0.5)
     # F1 = 2 * SE * PC / (SE + PC + 1e-6)
     return iou, dice, SE, PC, SP, ACC, HD95
+
+
+def iou_score_per_sample(output, target):
+    """
+    逐样本计算分割指标，返回每个样本的指标字典。
+    用于需要计算样本间均值±标准差的场景。
+
+    Args:
+        output: torch.Tensor, shape (B, C, H, W), 模型原始输出（未sigmoid）
+        target: torch.Tensor, shape (B, H, W) or (B, 1, H, W), 二值标签
+
+    Returns:
+        dict: 每个指标对应一个 list，长度为 B
+    """
+    smooth = 1e-5
+
+    if torch.is_tensor(output):
+        output = torch.sigmoid(output).detach().cpu().numpy()
+    if torch.is_tensor(target):
+        target = target.detach().cpu().numpy()
+
+    # 确保 target 是 4D
+    if target.ndim == 3:
+        target = target[:, np.newaxis, :, :]
+
+    B = output.shape[0]
+    metrics = {
+        'iou': [], 'dice': [], 'se': [], 'pc': [],
+        'sp': [], 'acc': [], 'hd95': []
+    }
+
+    for b in range(B):
+        pred = output[b:b+1]  # (1, C, H, W)
+        gt = target[b:b+1]    # (1, 1, H, W)
+
+        pred_bin = (pred > 0.5).astype(np.float64)
+        gt_bin = (gt > 0.5).astype(np.float64)
+
+        intersection = (pred_bin * gt_bin).sum()
+        union = (pred_bin + gt_bin).sum() - intersection
+
+        iou = (intersection + smooth) / (union + smooth)
+        dice = (2 * iou) / (iou + 1)
+
+        # 计算 SE, PC, SP, ACC
+        pred_t = torch.tensor(pred_bin)
+        gt_t = torch.tensor(gt_bin)
+
+        SE = get_sensitivity(pred_t, gt_t, threshold=0.5)
+        PC = get_precision(pred_t, gt_t, threshold=0.5)
+        SP = get_specificity(pred_t, gt_t, threshold=0.5)
+        ACC = get_accuracy(pred_t, gt_t, threshold=0.5)
+
+        # HD95
+        if pred_bin.sum() > 0 and gt_bin.sum() > 0:
+            hd95 = float(metric.binary.hd95(pred_bin, gt_bin))
+        else:
+            hd95 = 0.0
+
+        metrics['iou'].append(float(iou))
+        metrics['dice'].append(float(dice))
+        metrics['se'].append(float(SE))
+        metrics['pc'].append(float(PC))
+        metrics['sp'].append(float(SP))
+        metrics['acc'].append(float(ACC))
+        metrics['hd95'].append(hd95)
+
+    return metrics
 
 
 def dice_coef(output, target):
@@ -92,7 +162,6 @@ def calculate_metric_percase(pred, gt):
     else:
         return 0, 0
 
-import numpy as np
 from scipy.ndimage import distance_transform_edt, binary_erosion, generate_binary_structure
 
 def hd95_distance(pred, gt, voxelspacing=None):

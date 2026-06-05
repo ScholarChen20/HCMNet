@@ -10,7 +10,7 @@ from tqdm import tqdm
 from utils.config import  parse_args
 from nets import get_dataset,net
 from dataset import Dataset, ThyroidDataset, PolypDataset,MedicineDataset
-from utils.metrics import iou_score
+from utils.metrics import iou_score_per_sample
 from utils.utils import AverageMeter
 from ptflops import get_model_complexity_info
 current_date = datetime.date.today()
@@ -48,7 +48,7 @@ def main(config):
 
     val_names = val_dataset.names
     count = 0
-    top_dice_list = []
+    top_dice_heap = []  # 最小堆，维护 top-k 最高 dice 的样本
     top_k = 5
 
     #掩码pred-生成路径  config['Ablation'] \  config['ablaType'] + "_" +
@@ -70,44 +70,54 @@ def main(config):
             mask = output.clone()
             mask = torch.sigmoid(mask).cpu().numpy() > 0.5
 
-            for i in range(len(mask)):
-                cv2.imwrite(os.path.join(file_dir, val_names[count].split('.')[0] + '.png'), (mask[i, 0] * 255).astype('uint8'))
-                count = count + 1
-                val_names_batch = val_names[count:count + len(mask)]  # 更新 val_names_batch
-            target = torch.unsqueeze(target,dim=1)
-            iou, dice, SE, PC, SP, ACC, HD95 = iou_score(output, target)
-            avg_meters['test_iou'].update(iou, input.size(0))
-            avg_meters['test_dice'].update(dice, input.size(0))
-            avg_meters['test_acc'].update(ACC, input.size(0))
-            avg_meters['test_pc'].update(PC, input.size(0))
-            avg_meters['test_se'].update(SE, input.size(0))
-            avg_meters['test_sp'].update(SP, input.size(0))
-            avg_meters['test_hd95'].update(HD95, input.size(0))
-            for name in val_names_batch:
-                top_dice_list.append((dice, name))  # 注意：这里用的是 batch-level 的 dice
+            # 逐样本计算指标
+            sample_metrics = iou_score_per_sample(output, target)
 
-            # 维护 top-k 的最大堆
-            if len(top_dice_list) < top_k:
-                heapq.heappush(top_dice_list, (dice, val_names[count - len(mask)]))
-            else:
-                heapq.heappushpop(top_dice_list, (dice, val_names[count - len(mask)]))
+            for i in range(len(mask)):
+                # 保存预测掩码
+                cv2.imwrite(os.path.join(file_dir, val_names[count].split('.')[0] + '.png'),
+                           (mask[i, 0] * 255).astype('uint8'))
+
+                # 更新逐样本指标到 AverageMeter（n=1，每个样本独立）
+                sample_dice = sample_metrics['dice'][i]
+                avg_meters['test_iou'].update(sample_metrics['iou'][i], 1)
+                avg_meters['test_dice'].update(sample_dice, 1)
+                avg_meters['test_acc'].update(sample_metrics['acc'][i], 1)
+                avg_meters['test_pc'].update(sample_metrics['pc'][i], 1)
+                avg_meters['test_se'].update(sample_metrics['se'][i], 1)
+                avg_meters['test_sp'].update(sample_metrics['sp'][i], 1)
+                avg_meters['test_hd95'].update(sample_metrics['hd95'][i], 1)
+
+                # 维护 top-k 最小堆（堆顶是最小的 dice，新元素大于堆顶时替换）
+                sample_name = val_names[count]
+                if len(top_dice_heap) < top_k:
+                    heapq.heappush(top_dice_heap, (sample_dice, sample_name))
+                elif sample_dice > top_dice_heap[0][0]:
+                    heapq.heappushpop(top_dice_heap, (sample_dice, sample_name))
+
+                count = count + 1
 
     print(f'*************{config["model"]}模型的在{config["dataset"]}_测试指标结果:********')
-    print("IoU:", avg_meters['test_iou'].avg)
-    print("Dice:", avg_meters['test_dice'].avg)
-    print("ACC:", avg_meters['test_acc'].avg)
-    print("PC:", avg_meters['test_pc'].avg)
-    print("SP:", avg_meters['test_sp'].avg)
-    print("SE:", avg_meters['test_se'].avg)
-    print("HD95:", avg_meters['test_hd95'].avg)
+    print(f"IoU: {avg_meters['test_iou'].avg*100:.2f}±{avg_meters['test_iou'].std()*100:.2f}")
+    print(f"Dice: {avg_meters['test_dice'].avg*100:.2f}±{avg_meters['test_dice'].std()*100:.2f}")
+    print(f"ACC: {avg_meters['test_acc'].avg*100:.2f}±{avg_meters['test_acc'].std()*100:.2f}")
+    print(f"PC: {avg_meters['test_pc'].avg*100:.2f}±{avg_meters['test_pc'].std()*100:.2f}")
+    print(f"SP: {avg_meters['test_sp'].avg*100:.2f}±{avg_meters['test_sp'].std()*100:.2f}")
+    print(f"SE: {avg_meters['test_se'].avg*100:.2f}±{avg_meters['test_se'].std()*100:.2f}")
+    print(f"HD95: {avg_meters['test_hd95'].avg:.2f}±{avg_meters['test_hd95'].std():.2f}")
 
 
 
-    top_dice_sorted = sorted(top_dice_list, key=lambda x: x[0], reverse=True)[0:top_k]
+    top_dice_sorted = sorted(top_dice_heap, key=lambda x: x[0], reverse=True)[:top_k]
     metrics = {
         'Metric': ['IOU', 'DICE', 'ACC', 'PC', 'SE', 'SP', 'HD95'],
-        'Value': [avg_meters['test_iou'].avg, avg_meters['test_dice'].avg, avg_meters['test_acc'].avg,
-                  avg_meters['test_pc'].avg, avg_meters['test_se'].avg, avg_meters['test_sp'].avg, avg_meters['test_hd95'].avg]
+        'Value': [f"{avg_meters['test_iou'].avg*100:.2f}±{avg_meters['test_iou'].std()*100:.2f}",
+                  f"{avg_meters['test_dice'].avg*100:.2f}±{avg_meters['test_dice'].std()*100:.2f}",
+                  f"{avg_meters['test_acc'].avg*100:.2f}±{avg_meters['test_acc'].std()*100:.2f}",
+                  f"{avg_meters['test_pc'].avg*100:.2f}±{avg_meters['test_pc'].std()*100:.2f}",
+                  f"{avg_meters['test_se'].avg*100:.2f}±{avg_meters['test_se'].std()*100:.2f}",
+                  f"{avg_meters['test_sp'].avg*100:.2f}±{avg_meters['test_sp'].std()*100:.2f}",
+                  f"{avg_meters['test_hd95'].avg:.2f}±{avg_meters['test_hd95'].std():.2f}"]
     }
     # 添加 Top-k 文件名
     metrics['Metric'].extend([f'Top-{i + 1} Dice' for i in range(len(top_dice_sorted))])
